@@ -10,30 +10,39 @@ Speichert die Informationen der Vereinsmitglieder.
 | `name`         | TEXT       | Name des Mitglieds.                           |
 | `rolle`        | TEXT       | Rolle des Mitglieds (z. B. Admin, Kassierer). |
 
+```sql
 CREATE TABLE mitglieder (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     rolle TEXT NOT NULL
 );
+```
 
 ---
 
 ## Tabelle: Artikel
-Speichert die Informationen zu den verkauften Artikeln und deren Bestand.
+Speichert die Informationen Artikeln und deren Bestand.
 
-| Spalte         | Typ        | Beschreibung                             |
-|----------------|------------|------------------------------------------|
-| `id`           | INTEGER    | Primärschlüssel, eindeutige ID.          |
-| `name`         | TEXT       | Name des Artikels (z. B. Cola).          |
-| `preis`        | DECIMAL    | Preis pro Einheit.                       |
-| `bestand`      | INTEGER    | Aktueller Bestand des Artikels.          |
+| Spalte          | Typ        | Beschreibung                             |
+|-----------------|------------|------------------------------------------|
+| `id`            | INTEGER    | Primärschlüssel, eindeutige ID.          |
+| `name`          | TEXT       | Name des Artikels (z. B. Cola).          |
+| `kategorie`     | TEXT       | Getränke, Essen oder Diverses.           |
+| `sub_kategorie` | TEXT       | z. B. Alk., Non-Alk., Spirit, etc.       |
+| `preis`         | DECIMAL    | Preis pro Einheit.                       |
+| `einheit`       | DECIMAL    | Einheit Bspw. 4cl.                       |
+| `bestand`       | INTEGER    | Aktueller Bestand des Artikels.          |
 
+```sql
 CREATE TABLE artikel (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
+    kategorie TEXT,
+    sub_kategorie TEXT,
     preis DECIMAL(10, 2) NOT NULL,
     bestand INTEGER NOT NULL
 );
+```
 
 ---
 
@@ -44,25 +53,47 @@ Speichert alle getätigten Buchungen (Konsumationen).
 |----------------|------------|-----------------------------------------------------------------------------------------------------------|
 | `id`           | INTEGER    | Primärschlüssel, eindeutige ID.                                                                           |
 | `mitglied_id`  | INTEGER    | Verweis auf die `id` in der Tabelle Mitglieder (für wen die Konsumation ist).                             |
-| `artikel_id`   | INTEGER    | Verweis auf die `id` in der Tabelle Artikel (welcher Artikel gebucht wurde).                              |
-| `menge`        | INTEGER    | Anzahl der gebuchten Artikel.                                                                             |
 | `datum`        | DATETIME   | Zeitpunkt der Buchung.                                                                                    |
+| `tisch`        | BOOLEAN    | Ist das eine Tisch trx?                                                                                   |
 | `preis`        | DECIMAL    | Gesamtpreis der Buchung.                                                                                  |
 | `storno`       | BOOLEAN    | Ist Storno (ja/nein)?                                                                                     |
 | `erfasser_id`  | INTEGER    | Verweis auf die `id` in der Tabelle Mitglieder (welches Mitglied im Service die Transaktion erfasst hat). |
 
+```sql
 CREATE TABLE transaktionen (
     id INTEGER PRIMARY KEY,
     mitglied_id INTEGER,
-    artikel_id INTEGER,
-    menge INTEGER NOT NULL,
     datum DATETIME DEFAULT CURRENT_TIMESTAMP,
     preis DECIMAL(10, 2) NOT NULL,
+    storno BOOLEAN DEFAULT FALSE,
     erfasser_id INTEGER,
     FOREIGN KEY (mitglied_id) REFERENCES mitglieder (id),
-    FOREIGN KEY (artikel_id) REFERENCES artikel (id),
     FOREIGN KEY (erfasser_id) REFERENCES mitglieder (id)
 );
+```
+
+---
+
+## Tabelle: Transaktion_Artikel
+Speichert die Artikel und deren Mengen, die zu einer Transaktion gehören.
+
+| Spalte           | Typ        | Beschreibung                                                              |
+|------------------|------------|---------------------------------------------------------------------------|
+| `id`             | INTEGER    | Primärschlüssel.                                                          |
+| `transaktion_id` | INTEGER    | Verweis auf die `id` der Tabelle Transaktionen.                           |
+| `artikel_id`     | INTEGER    | Verweis auf die `id` in der Tabelle Artikel.                              |
+| `menge`          | INTEGER    | Anzahl der gebuchten Artikel für diese Transaktion.                       |
+
+```sql
+CREATE TABLE transaktion_artikel (
+    id INTEGER PRIMARY KEY,
+    transaktion_id INTEGER NOT NULL,
+    artikel_id INTEGER NOT NULL,
+    menge INTEGER NOT NULL,
+    FOREIGN KEY (transaktion_id) REFERENCES transaktionen (id),
+    FOREIGN KEY (artikel_id) REFERENCES artikel (id)
+);
+```
 
 ---
 
@@ -77,6 +108,7 @@ Protokolliert alle Änderungen am Bestand (z. B. Lieferungen, manuelle Anpassung
 | `grund`        | TEXT       | Grund der Änderung (z. B. "Lieferung").      |
 | `datum`        | DATETIME   | Zeitpunkt der Änderung.                      |
 
+```sql
 CREATE TABLE bestandsaenderungen (
     id INTEGER PRIMARY KEY,
     artikel_id INTEGER,
@@ -85,6 +117,7 @@ CREATE TABLE bestandsaenderungen (
     datum DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (artikel_id) REFERENCES artikel (id)
 );
+```
 
 ---
 
@@ -93,9 +126,11 @@ CREATE TABLE bestandsaenderungen (
    - Ein Mitglied kann mehrere Transaktionen haben.
    - `mitglied_id` in der Tabelle `Transaktionen` ist ein Fremdschlüssel, der auf `id` in der Tabelle `Mitglieder` verweist.
 
-2. **Artikel und Transaktionen**:
-   - Ein Artikel kann in mehreren Transaktionen vorkommen.
-   - `artikel_id` in der Tabelle `Transaktionen` ist ein Fremdschlüssel, der auf `id` in der Tabelle `Artikel` verweist.
+2. **Transaktionen und Artikel**:
+   - Eine Transaktion kann mehrere Artikel enthalten.
+   - Diese Beziehung wird über die Tabelle `Transaktion_Artikel` abgebildet.
+   - `transaktion_id` in der Tabelle `Transaktion_Artikel` ist ein Fremdschlüssel, der auf `id` in der Tabelle `Transaktionen` verweist.
+   - `artikel_id` in der Tabelle `Transaktion_Artikel` ist ein Fremdschlüssel, der auf `id` in der Tabelle `Artikel` verweist.
 
 3. **Artikel und Bestandsänderungen**:
    - Bestandsänderungen sind mit den Artikeln verknüpft.
