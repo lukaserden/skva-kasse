@@ -1,0 +1,9 @@
+.header {
+    background: #c55d5d;
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .header h2 {
+    margin: 0;
+  }
