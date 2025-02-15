@@ -71,6 +71,17 @@ const Mitglieder: React.FC = () => {
         // data={userData}
         customStyles={customStyles}
         pagination
+        paginationPerPage={10}  // Standardmässig 10 Zeilen pro Seite
+        paginationRowsPerPageOptions={[10, 20, 30, 50]}  // Auswahlmöglichkeiten
+        noDataComponent="Keine Daten gefunden"
+        paginationComponentOptions={{
+          rowsPerPageText: 'Zeilen pro Seite',
+          rangeSeparatorText: 'von',
+          noRowsPerPage: false, // Falls du eine Option zur Auswahl von Zeilen pro Seite anzeigen möchtest
+          selectAllRowsItem: true, // oder true, falls du diese Option haben möchtest
+          selectAllRowsItemText: 'Alle'
+
+        }}
       />
     </div> 
   );
