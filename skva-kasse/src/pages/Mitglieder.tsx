@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
 import { userData } from "../assets/userData";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ExcelExportButton from "../components/ExcelExportButton"; // Pfad ggf. anpassen
 import "../styles/Mitglieder.css";
 
 // Interface für ein Mitglied
@@ -18,7 +19,6 @@ const Mitglieder: React.FC = () => {
   const [newMember, setNewMember] = useState({ name: "", role: "" });
   const [showModal, setShowModal] = useState(false);
 
-  // Suchfunktion für Mitglieder
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const search = event.target.value;
     const filteredData = userData.filter((item: Member) =>
@@ -27,10 +27,9 @@ const Mitglieder: React.FC = () => {
     setRecords(filteredData);
   };
 
-  // Aktionen für einzelne Zeilen
   const handleEdit = (id: number) => {
-    console.log("View action for row with id:", id);
-    // Weitere Logik zum Anzeigen der Details...
+    console.log("Edit action for row with id:", id);
+    // Weitere Logik zum Bearbeiten...
   };
 
   const handleDelete = (id: number) => {
@@ -38,13 +37,11 @@ const Mitglieder: React.FC = () => {
     // Weitere Logik zum Löschen...
   };
 
-  // Update der Eingabefelder im Modal
   const handleNewMemberChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setNewMember((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Hinzufügen eines neuen Mitglieds
   const handleAddMember = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const newId = records.length > 0 ? records[records.length - 1].id + 1 : 1;
@@ -54,7 +51,6 @@ const Mitglieder: React.FC = () => {
     setShowModal(false);
   };
 
-  // Spalten-Definition inklusive einer Actions-Spalte
   const columns: TableColumn<Member>[] = [
     {
       name: "Actions",
@@ -118,13 +114,14 @@ const Mitglieder: React.FC = () => {
           placeholder="Suche Mitglied"
           onChange={handleChange}
         />
-
         <button type="button" onClick={() => setShowModal(true)}>
           <div className="btn">
             <PersonAddOutlinedIcon fontSize="large" className="user-add-icon" />
             <span>Mitglied hinzufügen</span>
           </div>
         </button>
+        {/* Verwendung der separaten ExcelExportButton-Komponente */}
+        <ExcelExportButton data={records} fileName="Mitglieder_Daten" />
       </div>
 
       <DataTable
@@ -148,7 +145,6 @@ const Mitglieder: React.FC = () => {
         }}
       />
 
-      {/* Modal für das Hinzufügen eines neuen Mitglieds */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
