@@ -17,8 +17,8 @@ const App: React.FC = () => {
             index
             element={
               <div>
-                <h1>Dashboard Home</h1>
-                <p>Übersicht über wichtige Kennzahlen und Informationen.</p>
+                <h1>Dashboard</h1>
+                <p>Startpunkt um auf versch. Dashboardpunkte zu navigieren.</p>
               </div>
             }
           />
