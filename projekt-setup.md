@@ -24,3 +24,8 @@ https://react-data-table-component.netlify.app/?path=/docs/getting-started-intro
 # Installiert react-data-table-component für flexible und leistungsfähige Tabellen in React
 # sowie styled-components für komponentenbasiertes Styling direkt in deinen React-Komponenten.
 npm install react-data-table-component styled-components
+
+
+## Design Icons
+Um Icons von MaterialUI zu nutzen:
+npm install @mui/icons-material
