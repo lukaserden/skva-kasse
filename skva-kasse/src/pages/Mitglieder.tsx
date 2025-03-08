@@ -4,7 +4,6 @@ import { userData } from "../assets/userData";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import ExcelExportButton from "../components/ExcelExportButton"; // Pfad ggf. anpassen
 import "../styles/Mitglieder.css";
 
 // Interface für ein Mitglied
@@ -120,8 +119,6 @@ const Mitglieder: React.FC = () => {
             <span>Mitglied hinzufügen</span>
           </div>
         </button>
-        {/* Verwendung der separaten ExcelExportButton-Komponente */}
-        <ExcelExportButton data={records} fileName="Mitglieder_Daten" />
       </div>
 
       <DataTable
