@@ -19,6 +19,7 @@ const App: React.FC = () => {
               <div>
                 <h1>Dashboard</h1>
                 <p>Startpunkt um auf versch. Dashboardpunkte zu navigieren.</p>
+                
               </div>
             }
           />

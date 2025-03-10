@@ -13,6 +13,14 @@ const Sidebar: React.FC = () => {
       <nav>
         <ul>
           <li>
+            <NavLink to="/kasse" end className={({ isActive }) => (isActive ? 'active' : undefined)}>
+              <div className="sidebar-item"> 
+                <PointOfSaleTwoToneIcon className="sidebar-icon" />
+                <span className="sidebar-text">Kasse</span>
+              </div>
+            </NavLink>
+          </li>
+          <li>
             <NavLink
               to="/admin"
               end

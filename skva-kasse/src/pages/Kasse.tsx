@@ -1,31 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "../styles/Kasse.css";
 import DropdownButton from "../components/Dropdown-Button";
 import ArticleTabs from "../components/ArticleTabs";
 
 const Kasse: React.FC = () => {
-  // State für die Bestellungen
   const [orders, setOrders] = useState<string[]>([]);
+  const orderDetailsRef = useRef<HTMLDivElement>(null); // Referenz auf order-details
 
-  // Funktion, um Artikel hinzuzufügen
+  // Funktion zum Hinzufügen eines Artikels zur Bestellung
   const addToOrder = (item: string) => {
     setOrders((prevOrders) => [...prevOrders, item]);
   };
 
-  // Funktion zum Abschließen der Bestellung (leert die Liste)
+  // Automatisches Scrollen nach unten, wenn eine neue Bestellung hinzugefügt wird
+  useEffect(() => {
+    if (orderDetailsRef.current) {
+      orderDetailsRef.current.scrollTop = orderDetailsRef.current.scrollHeight;
+    }
+  }, [orders]);
+
+  // Funktion zum Abschließen der Bestellung
   const handleCompleteOrder = () => {
-    setOrders([]); // Setzt die Bestellungen zurück
+    if (orders.length === 0) {
+      alert("Keine Bestellungen vorhanden");
+    } else if (window.confirm("Möchtest du die Bestellung wirklich abschließen?")) {
+      setOrders([]);
+    }
   };
 
   return (
     <div className="kasse-wrapper">
       <nav className="navbar">
         <h1>Kassen-System</h1>
-        {/* <ul>
+        <ul>
           <li><a href="#">Start</a></li>
-          <li><a href="#">Einstellungen</a></li>
+          <li><a href="/">Einstellungen</a></li>
           <li><a href="#">Logout</a></li>
-        </ul> */}
+        </ul>
         <DropdownButton />
       </nav>
 
@@ -37,8 +48,8 @@ const Kasse: React.FC = () => {
             <button className="table-select-button">Tisch auswählen</button>
           </div>
 
-          {/* Bestellungsliste */}
-          <div className="order-details">
+          {/* Bestellungsliste mit Referenz für Auto-Scroll */}
+          <div className="order-details" ref={orderDetailsRef}>
             {orders.length === 0 ? (
               <p>Keine Bestellungen</p>
             ) : (
@@ -52,7 +63,6 @@ const Kasse: React.FC = () => {
             <p>Summe: 100€</p>
           </div>
 
-          {/* Button zum Abschließen der Bestellung */}
           <div className="order-footer">
             <button className="order-button" onClick={handleCompleteOrder}>
               Bestellung abschließen
