@@ -80,3 +80,15 @@
   background-color: #20361c;
   color: white;
 }
+
+
+.btn-orange { background-color: orange; color: white; }
+.btn-red { background-color: red; color: white; }
+.btn-green { background-color: green; color: white; }
+.btn-purple { background-color: purple; color: white; }
+.btn-blue { background-color: blue; color: white; }
+.btn-brown { background-color: brown; color: white; }
+.btn-yellow { background-color: yellow; color: black; }
+.btn-pink { background-color: pink; color: black; }
+.btn-darkblue { background-color: darkblue; color: white; }
+.btn-default { background-color: grey; color: white; }

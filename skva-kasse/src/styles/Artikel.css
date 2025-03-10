@@ -1,0 +1,23 @@
+.resizable-column {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  
+  .resizable-column div {
+    flex-grow: 1;
+  }
+  
+  .resizer {
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    background-color: rgba(0, 0, 0, 0.2);
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+  }

@@ -4,7 +4,6 @@ import axios from "axios";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-
 // Interface für Artikel-Daten aus der API
 interface Artikel {
   id: number;
@@ -56,6 +55,17 @@ const ArtikelListe: React.FC = () => {
     // Hier könnte eine API-Anfrage für das Löschen erfolgen
   };
 
+  // Funktion zur Formatierung von Datum und Uhrzeit
+  const formatDateTime = (dateString: string) => {
+    return new Intl.DateTimeFormat("de-CH", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(dateString));
+  };
+
   // Spalten-Definition für die DataTable
   const columns: TableColumn<Artikel>[] = [
     {
@@ -70,11 +80,14 @@ const ArtikelListe: React.FC = () => {
           </button>
         </div>
       ),
+      width: "80px",
     },
     {
       name: "ID",
       selector: (row) => row.id,
       sortable: true,
+      width: "60px",
+      allowOverflow: true, // Verhindert, dass Inhalte abgeschnitten werden
     },
     {
       name: "Name",
@@ -88,39 +101,52 @@ const ArtikelListe: React.FC = () => {
     },
     {
       name: "Preis (CHF)",
-      selector: (row) => (row.price / 100).toFixed(2),
+      selector: (row) =>
+        new Intl.NumberFormat("de-CH", {
+          style: "currency",
+          currency: "CHF",
+        }).format(row.price / 100),
       sortable: true,
+      width: "100px",
     },
-    {
-      name: "Bestand",
-      selector: (row) => (row.stock !== null ? row.stock : "Nicht verfügbar"),
-      sortable: true,
-    },
+    // {
+    //   name: "Bestand",
+    //   selector: (row) => (row.stock !== null ? row.stock : "Nicht verfügbar"),
+    //   sortable: true,
+    // },
     {
       name: "Einheit",
       selector: (row) => row.unit,
       sortable: true,
+      width: "80px",
     },
     {
       name: "Kategorie ID",
       selector: (row) => row.category_id,
       sortable: true,
+      width: "90px",
     },
     {
       name: "Erstellt am",
-      selector: (row) => new Date(row.created_at).toLocaleDateString(),
+      selector: (row) => formatDateTime(row.created_at),
       sortable: true,
+      width: "180px",
     },
     {
       name: "Aktiv",
       selector: (row) => (row.is_active ? "Ja" : "Nein"),
       sortable: true,
+      width: "80px",
     },
   ];
 
   const customStyles = {
     headCells: {
       style: {
+        resize: "horizontal", // Macht die Spalten in CSS "ziehbar"
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        userSelect: "none",
         fontSize: "16px",
         fontWeight: "bold",
         color: "white",
@@ -161,6 +187,7 @@ const ArtikelListe: React.FC = () => {
         data={filteredArtikel}
         customStyles={customStyles}
         pagination
+        responsive
         noDataComponent="Keine Daten gefunden"
         paginationPerPage={10}
         paginationRowsPerPageOptions={[10, 25, 50, 100]}
@@ -170,7 +197,7 @@ const ArtikelListe: React.FC = () => {
           selectAllRowsItem: true,
           selectAllRowsItemText: "Alle",
         }}
-        selectableRows
+        // selectableRows
         selectableRowsHighlight
         onSelectedRowsChange={(selected) => {
           console.log("Ausgewählte Zeilen:", selected.selectedRows);
