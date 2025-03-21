@@ -10,7 +10,7 @@ router.get("/", async (req, res) => {
     res.json(products);
   } catch (error) {
     console.error("Fehler beim Abrufen der Produkte:", error);
-    res.status(500).json({ error: "Interner Serverfehler" });
+    res.status(500).json({ error: "Fehler beim Abrufen der Produkte:" });
   }
 });
 

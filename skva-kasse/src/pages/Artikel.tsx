@@ -24,10 +24,12 @@ const ArtikelListe: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>("");
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // Daten von der API abrufen
   useEffect(() => {
     axios
-      .get("http://localhost:5001/products")
+      .get(`${API_URL}/products`)
       .then((response) => {
         setArtikel(response.data);
         setLoading(false);
@@ -109,11 +111,6 @@ const ArtikelListe: React.FC = () => {
       sortable: true,
       width: "100px",
     },
-    // {
-    //   name: "Bestand",
-    //   selector: (row) => (row.stock !== null ? row.stock : "Nicht verfügbar"),
-    //   sortable: true,
-    // },
     {
       name: "Einheit",
       selector: (row) => row.unit,
@@ -143,10 +140,10 @@ const ArtikelListe: React.FC = () => {
   const customStyles = {
     headCells: {
       style: {
-        resize: "horizontal", // Macht die Spalten in CSS "ziehbar"
+        Resize: "horizontal", // Macht die Spalten in CSS "ziehbar"
         overflow: "hidden",
         whiteSpace: "nowrap",
-        userSelect: "none",
+        // userSelect: "none",
         fontSize: "16px",
         fontWeight: "bold",
         color: "white",

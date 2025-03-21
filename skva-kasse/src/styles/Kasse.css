@@ -53,11 +53,12 @@
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start; /* Sorgt dafür, dass Inhalt oben beginnt */
-    width: 35%;
+    width: 40%;
     height: 100%;
     background-color: #a23737;
     box-sizing: border-box;
     padding: 0.2rem; /* Statt margin */
+    overflow: hidden;
 }
 
   .order-header {
@@ -109,6 +110,7 @@
     border-radius: 5px;
     box-sizing: border-box;
     overflow: auto;
+    overflow-x: hidden;
     padding: 10px;
     margin: 0; /* Falls margin Probleme macht */
 }
@@ -118,7 +120,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    width: 65%;
+    width: 60%;
     height: 100%;
     background-color: #227a9c;
   }
@@ -140,6 +142,7 @@
     width: 100%;
     height: 100%;
     overflow-y: hidden;
+    
   }
   .artice-tabs {
     display: flex;
@@ -148,6 +151,7 @@
     width: 100%;
     background-color: #20361c;
     color: white;
+ 
   }
   .tab-button {
     background-color: #ffffff;
@@ -165,6 +169,8 @@
     align-items: flex-start;
     width: 95%;
     height: 75vh;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
     /* background-color: #6ebd60; */
     color: white;
     overflow-y: auto;  /* Scrollbar nur vertikal aktivieren */
@@ -181,6 +187,7 @@
   /* Chrome, Safari, Edge */
 .article-items::-webkit-scrollbar {
     width: 8px; /* Breite der Scrollbar */
+    
 }
 
 .article-items::-webkit-scrollbar-track {
@@ -193,6 +200,91 @@
     border-radius: 10px; /* Abgerundete Ecken */
 }
 
-.article-items::-webkit-scrollbar-thumb:hover {
-    background: #388E3C; /* Dunklere Farbe beim Hover */
+/* Stellt sicher, dass die Tabelle die richtige Breite hat */
+.order-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1px;
+  font-size: 1rem;
+  table-layout: fixed;
+}
+
+/* Header-Zeile */
+.order-table thead {
+  background-color: #f0f0f0;
+}
+
+.order-table th,
+.order-table td {
+  padding: 1rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.order-table th {
+  font-weight: 600;
+  border-radius: 2px;
+  color: #333;
+}
+
+/* Menge mit flexiblen Buttons */
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.quantity-controls button {
+  padding: 4px 8px;
+  font-size: 1rem;
+  border: none;
+  background-color: #eee;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+
+/* Subtotal und Preis schön rechtsbündig */
+.order-table td:nth-child(3),
+.order-table td:nth-child(4) {
+  text-align: right;
+  font-weight: bold;
+}
+
+.order-table th:nth-child(1), /* Produkt */
+.order-table td:nth-child(1) {
+  width: 45%; /* Name bekommt den meisten Platz */
+}
+
+.order-table th:nth-child(2), /* Menge */
+.order-table td:nth-child(2) {
+  width: 20%;
+  text-align: center;
+}
+
+.order-table th:nth-child(3), /* Preis */
+.order-table td:nth-child(3) {
+  width: 15%;
+  text-align: left;
+}
+
+.order-table th:nth-child(4), /* Subtotal */
+.order-table td:nth-child(4) {
+  width: 15%;
+  text-align: left;
+}
+
+.order-table th:nth-child(5), /* Löschen */
+.order-table td:nth-child(5) {
+  width: 5%;
+  text-align: center;
+}
+
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  text-align: right;
+  font-weight: bold;
 }

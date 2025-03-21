@@ -3,7 +3,7 @@ import axios from "axios";
 import "../styles/ArticleTabs.css";
 
 interface ArticleTabsProps {
-  addToOrder: (item: string) => void;
+  addToOrder: (item: Artikel) => void;
 }
 
 // Kategorie-Interface aus der API
@@ -18,6 +18,7 @@ interface Artikel {
   id: number;
   name: string;
   category_id: number;
+  price: number;
 }
 
 // Dynamische Hauptkategorien (Tabs)
@@ -48,18 +49,21 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   // 🚀 Kategorien & Artikel holen
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [categoryResponse, productResponse] = await Promise.all([
-          axios.get<Kategorie[]>("http://localhost:5001/categories"),
-          axios.get<Artikel[]>("http://localhost:5001/products"),
+          axios.get<Kategorie[]>(`${API_URL}/categories`),
+          axios.get<Artikel[]>(`${API_URL}/products`),
         ]);
 
         const categoryData = categoryResponse.data;
         const productData = productResponse.data;
         setCategories(categoryData);
+        console.log(articles);
         setArticles(productData);
 
         // 🔥 Artikel nach Hauptkategorie (parent_id) gruppieren
@@ -86,7 +90,7 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
       }
     };
 
-    fetchData();
+     fetchData();
   }, []);
 
   if (loading) return <p>Lade Artikel...</p>;
@@ -119,7 +123,7 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
               <button
                 key={item.id}
                 className={`article-item ${colorClass}`}
-                onClick={() => addToOrder(item.name)}
+                onClick={() => addToOrder(item)}
               >
                 {item.name}
               </button>

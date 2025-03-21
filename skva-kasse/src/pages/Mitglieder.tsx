@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
 import { userData } from "../assets/userData";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
-import EditIcon from "@mui/icons-material/Edit";
+// import EditIcon from "@mui/icons-material/Edit";
+import { TbEdit as EditIcon } from "react-icons/tb";
 import DeleteIcon from "@mui/icons-material/Delete";
 import "../styles/Mitglieder.css";
 
@@ -36,7 +37,9 @@ const Mitglieder: React.FC = () => {
     // Weitere Logik zum Löschen...
   };
 
-  const handleNewMemberChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNewMemberChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const { name, value } = event.target;
     setNewMember((prev) => ({ ...prev, [name]: value }));
   };

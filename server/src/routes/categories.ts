@@ -35,7 +35,7 @@ router.get("/:id", async (req, res) : Promise<any> => {
     res.json(category);
   } catch (error) {
     console.error("Fehler beim Abrufen der Kategorie:", error);
-    res.status(500).json({ error: "Interner Serverfehler" });
+    res.status(500).json({ error: "Fehler beim Abrufen der Kategorie" });
   }
 });
 

@@ -2,40 +2,97 @@ import React, { useState, useRef, useEffect } from "react";
 import "../styles/Kasse.css";
 import DropdownButton from "../components/Dropdown-Button";
 import ArticleTabs from "../components/ArticleTabs";
+import DeleteIcon from "@mui/icons-material/Delete";
+
+// Artikel-Interface
+interface Artikel {
+  id: number;
+  name: string;
+  category_id: number;
+  price: number;
+}
+
+// Bestellobjekt mit Menge und Preis
+interface OrderItem {
+  artikel: Artikel;
+  quantity: number;
+  price: number;
+}
 
 const Kasse: React.FC = () => {
-  const [orders, setOrders] = useState<string[]>([]);
-  const orderDetailsRef = useRef<HTMLDivElement>(null); // Referenz auf order-details
+  const [orders, setOrders] = useState<OrderItem[]>([]);
+  const orderDetailsRef = useRef<HTMLDivElement>(null);
 
-  // Funktion zum Hinzufügen eines Artikels zur Bestellung
-  const addToOrder = (item: string) => {
-    setOrders((prevOrders) => [...prevOrders, item]);
+  // Artikel zur Bestellung hinzufügen
+  const addToOrder = (item: Artikel) => {
+    const price = item.price / 100; // 💰 Cent → Franken
+
+    setOrders((prevOrders) => {
+      const existing = prevOrders.find((o) => o.artikel.id === item.id);
+
+      if (existing) {
+        return prevOrders.map((o) =>
+          o.artikel.id === item.id ? { ...o, quantity: o.quantity + 1 } : o
+        );
+      }
+
+      return [...prevOrders, { artikel: item, quantity: 1, price }];
+    });
   };
 
-  // Automatisches Scrollen nach unten, wenn eine neue Bestellung hinzugefügt wird
+  // Menge eines Artikels in der Bestellung anpassen
+  const updateQuantity = (artikelId: number, delta: number) => {
+    setOrders((prevOrders) =>
+      prevOrders
+        .map((o) =>
+          o.artikel.id === artikelId
+            ? { ...o, quantity: o.quantity + delta }
+            : o
+        )
+        .filter((o) => o.quantity > 0)
+    );
+  };
+
+  // Bestellung entfernen
+  const removeOrder = (artikelId: number) => {
+    setOrders((prevOrders) =>
+      prevOrders.filter((o) => o.artikel.id !== artikelId)
+    );
+  };
+
+  // Auto-Scroll nach unten bei neuer Bestellung
   useEffect(() => {
     if (orderDetailsRef.current) {
       orderDetailsRef.current.scrollTop = orderDetailsRef.current.scrollHeight;
     }
   }, [orders]);
 
-  // Funktion zum Abschließen der Bestellung
   const handleCompleteOrder = () => {
     if (orders.length === 0) {
       alert("Keine Bestellungen vorhanden");
-    } else if (window.confirm("Möchtest du die Bestellung wirklich abschließen?")) {
+    } else if (
+      window.confirm("Möchtest du die Bestellung wirklich abschließen?")
+    ) {
       setOrders([]);
     }
   };
+
+  const total = orders.reduce((sum, o) => sum + o.quantity * o.price, 0);
 
   return (
     <div className="kasse-wrapper">
       <nav className="navbar">
         <h1>Kassen-System</h1>
         <ul>
-          <li><a href="#">Start</a></li>
-          <li><a href="/">Einstellungen</a></li>
-          <li><a href="#">Logout</a></li>
+          <li>
+            <a href="#">Start</a>
+          </li>
+          <li>
+            <a href="/">Einstellungen</a>
+          </li>
+          <li>
+            <a href="#">Logout</a>
+          </li>
         </ul>
         <DropdownButton />
       </nav>
@@ -48,19 +105,75 @@ const Kasse: React.FC = () => {
             <button className="table-select-button">Tisch auswählen</button>
           </div>
 
-          {/* Bestellungsliste mit Referenz für Auto-Scroll */}
+          {/* Bestell-Tabelle */}
           <div className="order-details" ref={orderDetailsRef}>
             {orders.length === 0 ? (
-              <p>Keine Bestellungen</p>
+              <>
+                <table className="order-table">
+                  <thead>
+                    <tr>
+                      <th>Produkt</th>
+                      <th>Menge</th>
+                      <th>Preis CHF</th>
+                      <th>Subtotal CHF</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                </table>
+                <span>Keine Bestellungen</span>
+              </>
             ) : (
-              orders.map((order, index) => (
-                <p key={index}>{order}</p>
-              ))
+              <table className="order-table">
+                <thead>
+                  <tr>
+                    <th>Produkt</th>
+                    <th>Menge</th>
+                    <th>Preis CHF</th>
+                    <th>Subtotal CHF</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order, index) => (
+                    <tr key={index}>
+                      <td>{order.artikel.name}</td>
+
+                      <td>
+                        <div className="quantity-controls">
+                          <button
+                            onClick={() => updateQuantity(order.artikel.id, -1)}
+                          >
+                            -
+                          </button>
+                          <span>{order.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(order.artikel.id, 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </td>
+
+                      <td>{order.price.toFixed(2)}</td>
+                      <td>{(order.quantity * order.price).toFixed(2)}</td>
+                      <td>
+                        <button
+                          className="remove-button"
+                          onClick={() => removeOrder(order.artikel.id)}
+                          title="Entfernen"
+                        >
+                          <DeleteIcon fontSize="small" className="delete-icon" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
 
           <div className="order-total">
-            <p>Summe: 100€</p>
+            <p>Summe: {total.toFixed(2)} CHF</p>
           </div>
 
           <div className="order-footer">
@@ -72,7 +185,7 @@ const Kasse: React.FC = () => {
 
         <div className="right-panel">
           <div className="article-header">
-            <h2>ArtikelHeader</h2>
+            <h2>Artikel</h2>
           </div>
           <div className="article-list">
             <ArticleTabs addToOrder={addToOrder} />
