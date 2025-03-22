@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api";
 import DataTable, { TableColumn } from "react-data-table-component";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import { TbEdit as EditIcon } from "react-icons/tb";
@@ -27,8 +27,6 @@ interface MemberState {
 }
 
 const Mitglieder: React.FC = () => {
-  const API_URL = import.meta.env.VITE_API_URL;
-
   const [records, setRecords] = useState<Member[]>([]);
   const [allRecords, setAllRecords] = useState<Member[]>([]);
   const [memberStates, setMemberStates] = useState<MemberState[]>([]);
@@ -44,7 +42,7 @@ const Mitglieder: React.FC = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await axios.get(`${API_URL}/members`);
+        const response = await api.get("/members");
         setRecords(response.data);
         setAllRecords(response.data);
       } catch (error) {
@@ -54,7 +52,7 @@ const Mitglieder: React.FC = () => {
 
     const fetchStates = async () => {
       try {
-        const response = await axios.get(`${API_URL}/member-states`);
+        const response = await api.get("/member-states");
         setMemberStates(response.data);
       } catch (error) {
         console.error("Fehler beim Laden der Mitgliedsstatus:", error);
@@ -73,7 +71,7 @@ const Mitglieder: React.FC = () => {
   const handleAddMember = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      const response = await axios.post(`${API_URL}/members`, newMember);
+      const response = await api.post("/members", newMember);
       const createdId = response.data.member_id;
       setRecords((prev) => [...prev, { ...newMember, id: createdId } as Member]);
       setAllRecords((prev) => [...prev, { ...newMember, id: createdId } as Member]);
@@ -92,7 +90,7 @@ const Mitglieder: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`${API_URL}/members/${id}`);
+      await api.delete(`/members/${id}`);
       setRecords((prev) => prev.filter((m) => m.id !== id));
       setAllRecords((prev) => prev.filter((m) => m.id !== id));
     } catch (error) {

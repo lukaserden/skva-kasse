@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
 
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, -- Eindeutige Benutzer-ID
-    member_id INTEGER NOT NULL, -- Zugehörige Mitglieds-ID
+    member_id INTEGER NULL, -- Zugehörige Mitglieds-ID
     username TEXT UNIQUE NOT NULL, -- Benutzername
     password_hash TEXT NOT NULL, -- Gehashtes Passwort
     role_id INTEGER NOT NULL, -- Verweis auf die Benutzerrolle

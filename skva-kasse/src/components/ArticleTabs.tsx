@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import "../styles/ArticleTabs.css";
+import api from "../api"; // zentrale axios-Instanz verwenden
 
 interface ArticleTabsProps {
   addToOrder: (item: Artikel) => void;
 }
 
-// Kategorie-Interface aus der API
 interface Kategorie {
   id: number;
   name: string;
   parent_id: number | null;
 }
 
-// Artikel-Interface aus der API
 interface Artikel {
   id: number;
   name: string;
@@ -21,14 +19,12 @@ interface Artikel {
   price: number;
 }
 
-// Dynamische Hauptkategorien (Tabs)
 const mainCategories: Record<number, string> = {
   1: "Essen",
   2: "Getränke",
   3: "Diverses",
 };
 
-// Dynamische Farben für Child-Kategorien
 const categoryColors: Record<string, string> = {
   "Snacks": "btn-orange",
   "Warme Speisen": "btn-red",
@@ -49,29 +45,30 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = import.meta.env.VITE_API_URL;
-
-  // 🚀 Kategorien & Artikel holen
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [categoryResponse, productResponse] = await Promise.all([
-          axios.get<Kategorie[]>(`${API_URL}/categories`),
-          axios.get<Artikel[]>(`${API_URL}/products`),
+          api.get<Kategorie[]>("/categories"),
+          api.get<Artikel[]>("/products"),
         ]);
 
         const categoryData = categoryResponse.data;
         const productData = productResponse.data;
         setCategories(categoryData);
+
+        //kann später entfernt werden
         console.log(articles);
+
         setArticles(productData);
 
-        // 🔥 Artikel nach Hauptkategorie (parent_id) gruppieren
         const grouped: { [key: string]: Artikel[] } = {};
 
         productData.forEach((product) => {
-          const category = categoryData.find((cat) => cat.id === product.category_id);
-          if (!category || category.parent_id === null) return; // Falls kein Parent, ignorieren
+          const category = categoryData.find(
+            (cat) => cat.id === product.category_id
+          );
+          if (!category || category.parent_id === null) return;
 
           const parentName = mainCategories[category.parent_id] || "Sonstiges";
 
@@ -90,7 +87,7 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
       }
     };
 
-     fetchData();
+    fetchData();
   }, []);
 
   if (loading) return <p>Lade Artikel...</p>;
@@ -98,7 +95,6 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
 
   return (
     <div className="article-list">
-      {/* 🔥 Tabs Dynamisch aus Hauptkategorien */}
       <div className="article-tabs">
         {Object.values(mainCategories).map((tab) => (
           <button
@@ -111,11 +107,9 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
         ))}
       </div>
 
-      {/* 🔥 Artikel-Liste nach Hauptkategorie */}
       <div className="article-items">
         {groupedArticles[activeTab] ? (
           groupedArticles[activeTab].map((item) => {
-            // 🏷 Kategorie finden, um die richtige Farbe zuzuweisen
             const category = categories.find((cat) => cat.id === item.category_id);
             const colorClass = category ? categoryColors[category.name] || "btn-default" : "btn-default";
 

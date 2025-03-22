@@ -3,6 +3,8 @@ import "../styles/Kasse.css";
 import DropdownButton from "../components/Dropdown-Button";
 import ArticleTabs from "../components/ArticleTabs";
 import DeleteIcon from "@mui/icons-material/Delete";
+import OpenOrdersModal from "../components/OpenOrdersModal";
+import api from "../api"; // Axios-Instanz
 
 // Artikel-Interface
 interface Artikel {
@@ -45,6 +47,9 @@ const Kasse: React.FC = () => {
   const [showTableModal, setShowTableModal] = useState(false);
   const [customTableInput, setCustomTableInput] = useState("");
   const maxDefaultTables = 6;
+
+  // Offene Bestellungen-Modal
+  const [showOpenOrdersModal, setShowOpenOrdersModal] = useState(false);
 
   // Artikel zur Bestellung hinzufügen
   const addToOrder = (item: Artikel) => {
@@ -96,21 +101,21 @@ const Kasse: React.FC = () => {
       alert("Keine Bestellungen vorhanden");
       return;
     }
-
+  
     if (!selectedMemberId && !selectedTable) {
       alert("Bitte wähle ein Mitglied oder einen Tisch aus.");
       return;
     }
-
+  
     if (selectedMemberId && selectedTable) {
       alert("Es darf nur ein Tisch ODER ein Mitglied ausgewählt sein.");
       return;
     }
-
+  
     if (!window.confirm("Möchtest du die Bestellung wirklich abschließen?")) {
       return;
     }
-
+  
     // ✨ Transaktion vorbereiten
     const payload = {
       member_id: selectedMemberId ?? null,
@@ -126,32 +131,23 @@ const Kasse: React.FC = () => {
         price: Math.round(o.price * 100),
       })),
     };
-
+  
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/transactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        alert("Fehler: " + error.error);
-        return;
-      }
-
-      const data = await res.json();
-      console.log("Transaktion erfolgreich gespeichert:", data);
-
+      const response = await api.post("/transactions", payload);
+  
+      console.log("Transaktion erfolgreich gespeichert:", response.data);
+  
       // 🧹 Reset
       setOrders([]);
       setSelectedMemberId(null);
       setSelectedMemberName(null);
       setSelectedTable(null);
       alert("Bestellung gespeichert ✅");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Fehler beim Speichern:", error);
-      alert("Ein Fehler ist aufgetreten");
+      const errorMessage =
+        error.response?.data?.error || "Ein Fehler ist aufgetreten";
+      alert("Fehler: " + errorMessage);
     }
   };
 
@@ -160,14 +156,13 @@ const Kasse: React.FC = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/members`);
-        const data = await response.json();
-        setMembers(data);
+        const response = await api.get("/members");
+        setMembers(response.data);
       } catch (error) {
         console.error("Fehler beim Laden der Mitglieder:", error);
       }
     };
-
+  
     fetchMembers();
   }, []);
 
@@ -199,7 +194,7 @@ const Kasse: React.FC = () => {
             <a href="#">Start</a>
           </li>
           <li>
-            <a href="/">Einstellungen</a>
+            <a href="/admin">Einstellungen</a>
           </li>
           <li>
             <a href="#">Logout</a>
@@ -312,6 +307,12 @@ const Kasse: React.FC = () => {
         <div className="right-panel">
           <div className="article-header">
             <h2>Artikel</h2>
+            <button
+              className="open-orders-button"
+              onClick={() => setShowOpenOrdersModal(true)}
+            >
+              Offene Bestellungen
+            </button>
           </div>
           <div className="article-list">
             <ArticleTabs addToOrder={addToOrder} />
@@ -464,6 +465,10 @@ const Kasse: React.FC = () => {
               </button>
             </div>
           </div>
+        )}
+
+        {showOpenOrdersModal && (
+          <OpenOrdersModal onClose={() => setShowOpenOrdersModal(false)} />
         )}
       </div>
     </div>

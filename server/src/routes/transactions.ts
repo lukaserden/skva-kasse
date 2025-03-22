@@ -17,6 +17,24 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+/** GET: Alle offenen Transaktionen abrufen */
+router.get("/open", async (req: Request, res: Response): Promise<any> => {
+  try {
+    const db = await dbPromise;
+
+    const openTransactions = await db.all(
+      "SELECT * FROM transactions WHERE status = 'open' ORDER BY timestamp DESC"
+    );
+
+    res.json(openTransactions);
+  } catch (error) {
+    console.error("Fehler beim Abrufen offener Transaktionen:", error);
+    res
+      .status(500)
+      .json({ error: "Fehler beim Abrufen offener Transaktionen" });
+  }
+});
+
 /** GET by ID: Einzelne Transaktion abrufen */
 router.get("/:id", async (req: Request, res: Response): Promise<any> => {
   try {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
-import axios from "axios";
+import api from "@/api";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -24,12 +24,11 @@ const ArtikelListe: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>("");
 
-  const API_URL = import.meta.env.VITE_API_URL;
 
   // Daten von der API abrufen
   useEffect(() => {
-    axios
-      .get(`${API_URL}/products`)
+    api
+      .get("/products")
       .then((response) => {
         setArtikel(response.data);
         setLoading(false);
