@@ -1,17 +1,20 @@
-// src/pages/Dashboard.tsx
-import React from "react"
-import Sidebar from "@/components/Sidebar"
 import { Outlet } from "react-router-dom"
+import { useSidebar } from "../contexts/SidebarContext"
+import Sidebar from "../components/Sidebar"
 
 const Dashboard: React.FC = () => {
+  const { collapsed } = useSidebar()
+
   return (
-    <div className="flex">
+    <div className="min-h-screen">
       <Sidebar />
-      <main className="flex-1 overflow-auto p-6">
+      <main
+        className={`ml-${collapsed ? "16" : "64"} transition-all duration-300 min-h-screen p-6`}
+      >
         <Outlet />
       </main>
     </div>
   )
 }
 
-export default Dashboard
+export default Dashboard;

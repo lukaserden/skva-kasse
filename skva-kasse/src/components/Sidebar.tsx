@@ -9,7 +9,6 @@ import {
   Users,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,9 +19,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSidebar } from "../contexts/SidebarContext"; // ⬅️ Kontext importieren
 
 export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, toggle } = useSidebar(); // ⬅️ globaler Zustand
   const navigate = useNavigate();
 
   const logout = () => {
@@ -41,7 +41,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`h-screen border-r bg-muted flex flex-col justify-between transition-all duration-300 ${
+      className={`fixed top-0 left-0 z-40 h-screen border-r bg-muted flex flex-col justify-between transition-all duration-300 ${
         collapsed ? "w-16" : "w-64"
       }`}
     >
@@ -50,7 +50,7 @@ export default function Sidebar() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggle}
           className="self-start"
         >
           <Menu className="h-5 w-5" />
@@ -75,12 +75,11 @@ export default function Sidebar() {
             >
               <Icon className="h-5 w-5" />
 
-              {/* Normaler Text (wenn nicht collapsed) */}
               {!collapsed && <span>{label}</span>}
 
-              {/* Tooltip bei collapsed */}
               {collapsed && (
-                <span className="absolute left-full z-50 ml-2 whitespace-nowrap rounded bg-popover px-2 py-1 text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">                  {label}
+                <span className="absolute left-full z-50 ml-2 whitespace-nowrap rounded bg-popover px-2 py-1 text-xs shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                  {label}
                 </span>
               )}
             </NavLink>
