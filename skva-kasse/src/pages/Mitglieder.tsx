@@ -230,6 +230,7 @@ const Mitglieder: React.FC = () => {
             <h2>Neues Mitglied hinzufügen</h2>
             <form onSubmit={handleAddMember}>
               <input
+                title="Vorname"
                 type="text"
                 placeholder="Vorname"
                 name="first_name"
@@ -238,6 +239,7 @@ const Mitglieder: React.FC = () => {
                 required
               />
               <input
+                title="Nachname"
                 type="text"
                 placeholder="Nachname"
                 name="last_name"
@@ -246,6 +248,7 @@ const Mitglieder: React.FC = () => {
                 required
               />
               <input
+                title="Geburtsdatum"
                 type="date"
                 name="birthdate"
                 value={newMember.birthdate || ""}
@@ -253,6 +256,7 @@ const Mitglieder: React.FC = () => {
                 required
               />
               <input
+                title="Mitglieder Nummer"
                 type="text"
                 placeholder="Mitgliedsnummer"
                 name="membership_number"
@@ -261,6 +265,7 @@ const Mitglieder: React.FC = () => {
                 required
               />
               <select
+                title="Mitgliedsstatus"
                 name="member_state_id"
                 value={newMember.member_state_id}
                 onChange={handleNewMemberChange}

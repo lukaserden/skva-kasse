@@ -119,6 +119,15 @@ CREATE TABLE IF NOT EXISTS transaction_items (
     transaction_id INTEGER NOT NULL, -- Zugehörige Transaktions-ID
     product_id INTEGER NOT NULL, -- Gekauftes Produkt
     quantity INTEGER NOT NULL, -- Anzahl der gekauften Einheiten
+    status TEXT NOT NULL DEFAULT 'new' CHECK(status IN ('new', 'modified', 'canceled', 'confirmed', 'refunded')), -- Status der transaktions_items 
+    /* Status
+    Bedeutung
+    new: Neu hinzugefügt (default bei Bestellung)
+    modified: Menge oder Preis wurde angepasst
+    canceled: Einzelne Position wurde nachträglich storniert
+    confirmed:Fixiert oder final (z.B. nach Ausdruck oder Abrechnung)
+    refunded: Zurückgegeben (falls später unterstützt)
+    */
     price INTEGER NOT NULL, -- Preis pro Einheit
     subtotal INTEGER GENERATED ALWAYS AS (quantity * price) STORED, -- Automatisch berechnetes Gesamtpreisfeld
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,

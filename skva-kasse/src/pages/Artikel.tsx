@@ -85,13 +85,6 @@ const ArtikelListe: React.FC = () => {
       width: "80px",
     },
     {
-      name: "ID",
-      selector: (row) => row.id,
-      sortable: true,
-      width: "60px",
-      allowOverflow: true, // Verhindert, dass Inhalte abgeschnitten werden
-    },
-    {
       name: "Name",
       selector: (row) => row.name,
       sortable: true,
@@ -140,10 +133,8 @@ const ArtikelListe: React.FC = () => {
   const customStyles = {
     headCells: {
       style: {
-        Resize: "horizontal", // Macht die Spalten in CSS "ziehbar"
         overflow: "hidden",
         whiteSpace: "nowrap",
-        // userSelect: "none",
         fontSize: "16px",
         fontWeight: "bold",
         color: "white",
@@ -178,7 +169,7 @@ const ArtikelListe: React.FC = () => {
         />
       </div>
 
-      {/* 📊 DataTable */}
+      {/* DataTable */}
       <DataTable
         columns={columns}
         data={filteredArtikel}
@@ -194,7 +185,6 @@ const ArtikelListe: React.FC = () => {
           selectAllRowsItem: true,
           selectAllRowsItemText: "Alle",
         }}
-        // selectableRows
         selectableRowsHighlight
         onSelectedRowsChange={(selected) => {
           console.log("Ausgewählte Zeilen:", selected.selectedRows);
