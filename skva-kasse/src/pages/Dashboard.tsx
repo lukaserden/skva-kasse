@@ -1,25 +1,17 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
-import Header from '../components/Header';
-import '../styles/Dashboard.css';
+// src/pages/Dashboard.tsx
+import React from "react"
+import Sidebar from "@/components/Sidebar"
+import { Outlet } from "react-router-dom"
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="dashboard-container">
-
-
+    <div className="flex">
       <Sidebar />
-      {/* Hauptbereich */}
-      <div className="main-content">
-        <Header />
-        <main>
-          {/* Hier werden die verschachtelten Routen gerendert */}
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1 overflow-auto p-6">
+        <Outlet />
+      </main>
     </div>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard
