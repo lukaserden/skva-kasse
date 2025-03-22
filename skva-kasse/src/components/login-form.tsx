@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import Logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,11 +26,14 @@ export function LoginForm({
     e.preventDefault();
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        }
+      );
 
       const data = await response.json();
 
@@ -42,7 +46,6 @@ export function LoginForm({
 
       // ✅ Weiterleitung nach erfolgreichem Login
       navigate("/admin");
-
     } catch (error: any) {
       setErrorMsg(error.message);
     }
@@ -52,6 +55,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
+          <img src={Logo} alt="Logo" className="h-12 w-auto" />
           <CardTitle>Login</CardTitle>
           <CardDescription>
             Bitte Benutzername und Passwort eingeben
@@ -60,17 +64,18 @@ export function LoginForm({
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 ">
             <div>
-              <Label htmlFor="username">Benutzername</Label>
+              <Label className="mb-2" htmlFor="username">
+                Benutzername
+              </Label>
               <Input
                 id="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Benutzername"
                 required
               />
             </div>
             <div>
-              <Label htmlFor="password">Passwort</Label>
+              <Label className="mb-2" htmlFor="password">Passwort</Label>
               <Input
                 id="password"
                 type="password"
@@ -80,18 +85,8 @@ export function LoginForm({
               />
             </div>
 
-            {errorMsg && (
-              <p className="text-red-600 text-sm">{errorMsg}</p>
-            )}
+            {errorMsg && <p className="text-red-600 text-sm">{errorMsg}</p>}
             <Button type="submit" className="w-full mt-2">
-              Einloggen
-            </Button>
-
-            <Button type="submit" className="w-full mt-2" variant={"secondary"}>
-              Einloggen
-            </Button>
-
-            <Button type="submit" className="w-full mt-2" variant={"destructive"}>
               Einloggen
             </Button>
           </form>
