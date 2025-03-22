@@ -77,8 +77,8 @@ CREATE TABLE IF NOT EXISTS members (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, -- Eindeutige Mitglieds-ID
     first_name TEXT NOT NULL, -- Vorname
     last_name TEXT NOT NULL, -- Nachname
-    birthdate DATETIME NOT NULL, -- Geburtsdatum
-    email TEXT UNIQUE NULL, -- E-Mail-Adresse (optional)
+    birthdate DATETIME NULL, -- Geburtsdatum
+    email TEXT NULL, -- E-Mail-Adresse (optional)
     phone TEXT NULL, -- Telefonnummer
     membership_number TEXT UNIQUE NOT NULL, -- Mitgliedsnummer
     member_state_id INTEGER NOT NULL, -- Verweis auf den Mitgliedsstatus
@@ -221,11 +221,74 @@ INSERT INTO products (name,description,price,unit,category_id) VALUES
 	-- Snacks category_id =4
 	('Chips kl.','Zweifel Nature+Paprika','150','30gr','4'),
 	('Chips gr.','Zweifel Nature+Paprika','300','90gr','4'),
-	('Grissini.','','200','60gr','4'),
+	('Grissini','','200','60gr','4'),
 	('Erdnüsse','','200','100gr','4'),
 	('Pop-Corn','','300','100gr','4'),
 	-- Warme Speisen category_id =5
 	('Döner','','800','1x','5');
+
+
+    -- Mitglieder
+INSERT INTO members (first_name,last_name,birthdate,email,phone,membership_number,member_state_id,discount,is_active,is_service_required) VALUES 
+('Sami','Özdemir','1980-01-01','','','M1000','1','','1','1'),
+('Daniel','Somlyai','1980-01-01','','','M1001','1','','1','1'),
+('Matey','Akkaya','1980-01-01','','','M1002','1','','1','0'),
+('Lukas','Erden','1980-01-01','','','M1003','1','','1','1'),
+('Saliba','Algul','1980-01-01','','','M1004','1','','1','1'),
+('Abraham','Acan','1980-01-01','','','M1005','1','','1','1'),
+('Saliba','Eyyi','1980-01-01','','','M1006','1','','1','1'),
+('Nebil','Oers','1980-01-01','','','M1007','1','','1','1'),
+('Abraham','Gabriel','1980-01-01','','','M1008','1','','1','1'),
+('Markus','Gabriel','1980-01-01','','','M1009','1','','1','1'),
+('Luca','Özdemir','1980-01-01','','','M1010','1','','1','1'),
+('Andreas','Hauenstein','1980-01-01','','','M1011','1','','1','1'),
+('Severyos','Oers','1980-01-01','','','M1012','1','','1','1'),
+('Gabriel','Bugday','1980-01-01','','','M1013','1','','1','1'),
+('Gabriel','Eyyi','1980-01-01','','','M1014','1','','1','1'),
+('Gerabet','Özdemir','1980-01-01','','','M1015','1','','1','1'),
+('Isa','Özdemir','1980-01-01','','','M1016','1','','1','1'),
+('Alexander','Ayik','1980-01-01','','','M1017','1','','1','1'),
+('David','Er','1980-01-01','','','M1018','1','','1','1'),
+('Elyas','Oers','1980-01-01','','','M1019','1','','1','1'),
+('Hanuno','Özaslan','1980-01-01','','','M1020','1','','1','1'),
+('George','Safar','1980-01-01','','','M1021','1','','1','1'),
+('Tanyeli','Behnan','1980-01-01','','','M1022','2','','1','1'),
+('Yakob','Bugday','1980-01-01','','','M1023','1','','1','1'),
+('Iskender','Isik','1980-01-01','','','M1024','1','','1','1'),
+('Walter','Gamba','1980-01-01','','','M1025','1','','1','1'),
+('Yusuf','Algul','1980-01-01','','','M1026','1','','1','1'),
+('Severios','Er','1980-01-01','','','M1027','1','','1','1'),
+('Süleyman','Bugday','1980-01-01','','','M1028','1','','1','1'),
+('Shlemun','Erden','1980-01-01','','','M1029','1','','1','1'),
+('Michael','Gehringer','1980-01-01','','','M1030','1','','1','1'),
+('Giuseppe','Arik','1980-01-01','','','M1031','1','','1','1'),
+('Stefan','Eyyi','1980-01-01','','','M1032','1','','1','1'),
+('Matay','Er','1980-01-01','','','M1033','1','','1','1'),
+('Kaume','Erden','1980-01-01','','','M1034','1','','1','1'),
+('Maravgi','Oers','1980-01-01','','','M1035','1','','1','1'),
+('Melek','Es','1980-01-01','','','M1036','1','','1','1'),
+('Matthias','Erden','1980-01-01','','','M1037','1','','1','1'),
+('Manuel','Oers','1980-01-01','','','M1038','1','','1','1'),
+('Thomas','Oers','1980-01-01','','','M1039','1','','1','1'),
+('Saliba','Unal','1980-01-01','','','M1040','1','','1','1'),
+('Isa','Simon (Türçin)','1980-01-01','','','M1041','2','','1','1'),
+('Hanan','Atug','1980-01-01','','','M1042','1','','1','1'),
+('Daniel','Oers','1980-01-01','','','M1043','1','','1','1'),
+('Ninorta','Oers','1980-01-01','','','M1044','1','','1','1'),
+('Lea','Tozman','1980-01-01','','','M1045','1','','1','1'),
+('Murat','Tozman','1980-01-01','','','M1046','1','','1','1'),
+('Philipp','Tozman','1980-01-01','','','M1047','1','','1','1'),
+('Rebecca','Tozman','1980-01-01','','','M1048','1','','1','1'),
+('Andreas','Yagiz','1980-01-01','','','M1049','1','','1','1'),
+('Semun','Yagiz','1980-01-01','','','M1050','1','','1','1'),
+('Johannes','Güzel','1980-01-01','','','M1051','1','','1','1'),
+('Johannes','Erden','1980-01-01','','','M1052','1','','1','1'),
+('Malek','Bachir','1980-01-01','','','M1053','1','','1','1'),
+('Gecer','Christian','1980-01-01','','','M1054','1','','1','1'),
+('Semun','Elitok','1980-01-01','','','M1055','1','','1','1'),
+('Kerim','Gürkan','1980-01-01','','','M1056','1','','1','1'),
+('Markus','Erden','1980-01-01','','','M1057','1','','1','1'),
+('Jakob','Oers','1980-01-01','','','M1058','1','','1','1');
 
 
     -- TEST DATEN
@@ -263,3 +326,4 @@ INSERT INTO transaction_items (transaction_id,product_id,quantity,price) VALUES
     (2,4,1,500),
     (2,5,1,250),
     (3,6,1,500);
+

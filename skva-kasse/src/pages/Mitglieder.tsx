@@ -1,86 +1,162 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import DataTable, { TableColumn } from "react-data-table-component";
-import { userData } from "../assets/userData";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
-// import EditIcon from "@mui/icons-material/Edit";
 import { TbEdit as EditIcon } from "react-icons/tb";
 import DeleteIcon from "@mui/icons-material/Delete";
 import "../styles/Mitglieder.css";
 
-// Interface für ein Mitglied
 interface Member {
   id: number;
+  first_name: string;
+  last_name: string;
+  birthdate: string;
+  email?: string;
+  phone?: string;
+  membership_number: string;
+  member_state_id: number;
+  discount: number;
+  is_active: number;
+  is_service_required: number;
+  created_at: string;
+}
+
+interface MemberState {
+  id: number;
   name: string;
-  role: string;
 }
 
 const Mitglieder: React.FC = () => {
-  const [records, setRecords] = useState<Member[]>(userData);
-  const [newMember, setNewMember] = useState({ name: "", role: "" });
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  const [records, setRecords] = useState<Member[]>([]);
+  const [allRecords, setAllRecords] = useState<Member[]>([]);
+  const [memberStates, setMemberStates] = useState<MemberState[]>([]);
+  const [newMember, setNewMember] = useState<Partial<Member>>({
+    first_name: "",
+    last_name: "",
+    birthdate: "",
+    membership_number: "",
+    member_state_id: 1,
+  });
   const [showModal, setShowModal] = useState(false);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const search = event.target.value;
-    const filteredData = userData.filter((item: Member) =>
-      item.name.toLowerCase().includes(search.toLowerCase())
-    );
-    setRecords(filteredData);
-  };
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/members`);
+        setRecords(response.data);
+        setAllRecords(response.data);
+      } catch (error) {
+        console.error("Fehler beim Laden der Mitglieder:", error);
+      }
+    };
 
-  const handleEdit = (id: number) => {
-    console.log("Edit action for row with id:", id);
-    // Weitere Logik zum Bearbeiten...
-  };
+    const fetchStates = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/member-states`);
+        setMemberStates(response.data);
+      } catch (error) {
+        console.error("Fehler beim Laden der Mitgliedsstatus:", error);
+      }
+    };
 
-  const handleDelete = (id: number) => {
-    console.log("Delete action for row with id:", id);
-    // Weitere Logik zum Löschen...
-  };
+    fetchMembers();
+    fetchStates();
+  }, []);
 
-  const handleNewMemberChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleNewMemberChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
     setNewMember((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddMember = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddMember = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const newId = records.length > 0 ? records[records.length - 1].id + 1 : 1;
-    const memberToAdd: Member = { id: newId, ...newMember };
-    setRecords((prevRecords) => [...prevRecords, memberToAdd]);
-    setNewMember({ name: "", role: "" });
-    setShowModal(false);
+    try {
+      const response = await axios.post(`${API_URL}/members`, newMember);
+      const createdId = response.data.member_id;
+      setRecords((prev) => [...prev, { ...newMember, id: createdId } as Member]);
+      setAllRecords((prev) => [...prev, { ...newMember, id: createdId } as Member]);
+      setNewMember({
+        first_name: "",
+        last_name: "",
+        birthdate: "",
+        membership_number: "",
+        member_state_id: 1,
+      });
+      setShowModal(false);
+    } catch (error) {
+      console.error("Fehler beim Erstellen des Mitglieds:", error);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await axios.delete(`${API_URL}/members/${id}`);
+      setRecords((prev) => prev.filter((m) => m.id !== id));
+      setAllRecords((prev) => prev.filter((m) => m.id !== id));
+    } catch (error) {
+      console.error("Fehler beim Löschen des Mitglieds:", error);
+    }
+  };
+
+  const handleEdit = (id: number) => {
+    console.log("Edit action for row with id:", id);
   };
 
   const columns: TableColumn<Member>[] = [
     {
-      name: "Actions",
+      name: "Aktionen",
       cell: (row) => (
         <div className="action-buttons">
-          <button onClick={() => handleEdit(row.id)} title="Eintrag bearbeiten">
+          <button onClick={() => handleEdit(row.id)} title="Bearbeiten">
             <EditIcon fontSize="small" className="edit-icon" />
           </button>
-          <button onClick={() => handleDelete(row.id)} title="Eintrag löschen">
+          <button onClick={() => handleDelete(row.id)} title="Löschen">
             <DeleteIcon fontSize="small" className="delete-icon" />
           </button>
         </div>
       ),
     },
     {
-      name: "ID",
-      selector: (row) => row.id,
+      name: "Mitgliedsnummer",
+      selector: (row) => row.membership_number,
       sortable: true,
     },
     {
       name: "Name",
-      selector: (row) => row.name,
+      selector: (row) => `${row.first_name} ${row.last_name}`,
       sortable: true,
     },
     {
-      name: "Role",
-      selector: (row) => row.role,
-      sortable: true,
+      name: "Status",
+      cell: (row) => {
+        const state = memberStates.find((s) => s.id === row.member_state_id);
+        const label = state?.name ?? "unbekannt";
+        const statusColors: Record<string, string> = {
+          aktiv: "green",
+          passiv: "gray",
+          ehrenmitglied: "purple",
+          gesperrt: "red",
+          inaktiv: "orange",
+        };
+        const color = statusColors[label.toLowerCase()] || "black";
+
+        return (
+          <span
+            style={{
+              backgroundColor: color,
+              color: "white",
+              padding: "2px 8px",
+              borderRadius: "12px",
+              fontSize: "12px",
+              fontWeight: "bold",
+            }}
+          >
+            {label}
+          </span>
+        );
+      },
     },
   ];
 
@@ -107,14 +183,18 @@ const Mitglieder: React.FC = () => {
       <h1>Mitglieder</h1>
       <p>Verwaltung der Mitglieder.</p>
 
-      <div className="add"></div>
-
       <div className="search">
         <p>Mitglieder durchsuchen</p>
         <input
           type="text"
           placeholder="Suche Mitglied"
-          onChange={handleChange}
+          onChange={(e) => {
+            const search = e.target.value.toLowerCase();
+            const filtered = allRecords.filter((m) =>
+              `${m.first_name} ${m.last_name}`.toLowerCase().includes(search)
+            );
+            setRecords(filtered);
+          }}
         />
         <button type="button" onClick={() => setShowModal(true)}>
           <div className="btn">
@@ -138,7 +218,6 @@ const Mitglieder: React.FC = () => {
           selectAllRowsItem: true,
           selectAllRowsItemText: "Alle",
         }}
-        selectableRows
         selectableRowsHighlight
         onSelectedRowsChange={(selected) => {
           console.log("Ausgewählte Zeilen:", selected.selectedRows);
@@ -152,20 +231,47 @@ const Mitglieder: React.FC = () => {
             <form onSubmit={handleAddMember}>
               <input
                 type="text"
-                placeholder="Name"
-                name="name"
-                value={newMember.name}
+                placeholder="Vorname"
+                name="first_name"
+                value={newMember.first_name || ""}
                 onChange={handleNewMemberChange}
                 required
               />
               <input
                 type="text"
-                placeholder="Rolle"
-                name="role"
-                value={newMember.role}
+                placeholder="Nachname"
+                name="last_name"
+                value={newMember.last_name || ""}
                 onChange={handleNewMemberChange}
                 required
               />
+              <input
+                type="date"
+                name="birthdate"
+                value={newMember.birthdate || ""}
+                onChange={handleNewMemberChange}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Mitgliedsnummer"
+                name="membership_number"
+                value={newMember.membership_number || ""}
+                onChange={handleNewMemberChange}
+                required
+              />
+              <select
+                name="member_state_id"
+                value={newMember.member_state_id}
+                onChange={handleNewMemberChange}
+                required
+              >
+                {memberStates.map((state) => (
+                  <option key={state.id} value={state.id}>
+                    {state.name}
+                  </option>
+                ))}
+              </select>
               <div className="modal-buttons">
                 <button className="submit" type="submit">
                   Hinzufügen
