@@ -10,6 +10,7 @@ import memberStates from "./routes/memberStates";
 import transactions from "./routes/transactions";
 import authLogin from "./routes/authLogin";
 import initAdmin from "./routes/initAdmin";
+import transactionItem from "./routes/transactionItems";
 
 import authMiddleware from "./middleware/authMiddleware";
 
@@ -28,6 +29,7 @@ app.use("/auth/", initAdmin); // POST /auth/init-admin
 
 /* --------------------  Geschützte Routen -------------------- */
 app.use("/transactions", authMiddleware, transactions);
+app.use("/transaction-items", authMiddleware, transactionItem);
 app.use("/products", authMiddleware, products);
 app.use("/categories", authMiddleware, categories);
 app.use("/members", authMiddleware, members);

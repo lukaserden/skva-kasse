@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import DataTable, { TableColumn } from "react-data-table-component";
-import { TbEdit as EditIcon } from "react-icons/tb";
 
 import {
   UserPlus,
