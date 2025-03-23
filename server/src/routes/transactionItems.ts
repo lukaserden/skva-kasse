@@ -5,6 +5,7 @@ import dbPromise from "../db/database";
 const router = Router();
 
 // GET /transaction-items/by-transaction/:id
+// routes/transactionItems.ts
 router.get(
   "/by-transaction/:id",
   async (req: Request, res: Response): Promise<any> => {
@@ -17,7 +18,15 @@ router.get(
       }
 
       const items = await db.all(
-        `SELECT * FROM transaction_items WHERE transaction_id = ?`,
+        `SELECT 
+           ti.id,
+           ti.quantity,
+           ti.price,
+           ti.subtotal,
+           p.name AS product_name
+         FROM transaction_items ti
+         JOIN products p ON ti.product_id = p.id
+         WHERE ti.transaction_id = ?`,
         [transactionId]
       );
 
