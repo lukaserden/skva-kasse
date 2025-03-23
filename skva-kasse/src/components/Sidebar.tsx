@@ -7,6 +7,7 @@ import {
   Package,
   ShoppingCart,
   Users,
+  Calculator
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,7 @@ export default function Sidebar() {
   };
 
   const links = [
-    { to: "/kasse", label: "Kasse", icon: ShoppingCart },
+    { to: "/kasse", label: "Kasse", icon: Calculator },
     { to: "/admin", label: "Home", icon: Home },
     { to: "/admin/mitglieder", label: "Mitglieder", icon: Users },
     { to: "/admin/artikel", label: "Artikel", icon: Package },

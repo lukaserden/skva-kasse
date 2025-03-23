@@ -6,15 +6,17 @@ const Dashboard: React.FC = () => {
   const { collapsed } = useSidebar()
 
   return (
-    <div className="min-h-screen">
+    <>
       <Sidebar />
       <main
-        className={`ml-${collapsed ? "16" : "64"} transition-all duration-300 min-h-screen p-6`}
+        className={`transition-all duration-300 min-h-screen p-6 ${
+          collapsed ? "pl-[4.5rem]" : "pl-[17rem]" // ≈ 1rem Abstand zur Sidebar
+        }`}
       >
         <Outlet />
       </main>
-    </div>
+    </>
   )
 }
 
-export default Dashboard;
+export default Dashboard

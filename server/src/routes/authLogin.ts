@@ -42,7 +42,8 @@ router.post("/login", async (req: Request, res: Response): Promise<any> => {
         role_id: user.role_id,
         role: user.role_name,
       },
-      process.env.JWT_SECRET!,
+      "Zl1xpQ6cf9xPlNYI4cWQbR+3MXMSYQoAv1XvGozF8sc=",
+      // process.env.JWT_SECRET!,
       { expiresIn: "12h" }
     );
 

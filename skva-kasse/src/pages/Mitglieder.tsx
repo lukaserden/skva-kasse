@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
 import DataTable, { TableColumn } from "react-data-table-component";
-import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
 import { TbEdit as EditIcon } from "react-icons/tb";
-import DeleteIcon from "@mui/icons-material/Delete";
+
+import {
+  UserPlus,
+  SquarePen,
+  Trash2
+} from "lucide-react";
+
 import "../styles/Mitglieder.css";
 
 interface Member {
@@ -108,10 +113,10 @@ const Mitglieder: React.FC = () => {
       cell: (row) => (
         <div className="action-buttons">
           <button onClick={() => handleEdit(row.id)} title="Bearbeiten">
-            <EditIcon fontSize="small" className="edit-icon" />
+            <SquarePen fontSize="small" className="edit-icon" />
           </button>
           <button onClick={() => handleDelete(row.id)} title="Löschen">
-            <DeleteIcon fontSize="small" className="delete-icon" />
+            <Trash2 fontSize="small" className="delete-icon" />
           </button>
         </div>
       ),
@@ -196,7 +201,7 @@ const Mitglieder: React.FC = () => {
         />
         <button type="button" onClick={() => setShowModal(true)}>
           <div className="btn">
-            <PersonAddOutlinedIcon fontSize="large" className="user-add-icon" />
+            <UserPlus size={24} />
             <span>Mitglied hinzufügen</span>
           </div>
         </button>

@@ -15,36 +15,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const database_1 = __importDefault(require("../db/database"));
 const router = (0, express_1.Router)();
-// 🔥 Alle Kategorien abrufen
+/** GET: Alle Mitgliedsstatus abrufen */
 router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const db = yield database_1.default;
-        const categories = yield db.all("SELECT * FROM categories");
-        res.json(categories);
+        const states = yield db.all("SELECT * FROM member_states ORDER BY id ASC");
+        res.json(states);
     }
     catch (error) {
-        console.error("Fehler beim Abrufen der Kategorien:", error);
-        res.status(500).json({ error: "Interner Serverfehler" });
-    }
-}));
-// 🔥 Einzelne Kategorie nach ID abrufen
-router.get("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const db = yield database_1.default;
-        const categoryId = req.params.id;
-        // Prüfen, ob die ID eine Zahl ist
-        if (isNaN(Number(categoryId))) {
-            return res.status(400).json({ error: "Ungültige Kategorie-ID" });
-        }
-        const category = yield db.get("SELECT * FROM categories WHERE id = ?", [categoryId]);
-        if (!category) {
-            return res.status(404).json({ error: "Kategorie nicht gefunden" });
-        }
-        res.json(category);
-    }
-    catch (error) {
-        console.error("Fehler beim Abrufen der Kategorie:", error);
-        res.status(500).json({ error: "Fehler beim Abrufen der Kategorie" });
+        console.error("Fehler beim Abrufen der Mitgliedsstatus:", error);
+        res.status(500).json({ error: "Fehler beim Abrufen der Mitgliedsstatus" });
     }
 }));
 exports.default = router;
