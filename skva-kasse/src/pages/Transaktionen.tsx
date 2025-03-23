@@ -42,6 +42,7 @@ interface TransactionItem {
   quantity: number;
   price: number;
   subtotal: number;
+  status: string;
 }
 
 export default function Transaktionen() {
@@ -115,9 +116,14 @@ export default function Transaktionen() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ getValue }) => (
-        <Badge variant="outline">{getValue() as string}</Badge>
-      ),
+      cell: ({ getValue }) => {
+        const status = getValue() as string;
+        return (
+          <Badge variant={getBadgeVariant(status)}>
+            {translateStatus(status)}
+          </Badge>
+        );
+      },
     },
   ];
 
@@ -138,6 +144,69 @@ export default function Transaktionen() {
     getPaginationRowModel: getPaginationRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
   });
+
+  function getBadgeVariant(
+    status: string
+  ): "default" | "secondary" | "destructive" | "outline" | "ghost" {
+    switch (status) {
+      case "paid":
+        return "default";
+      case "canceled":
+        return "destructive";
+      case "open":
+        return "secondary";
+      default:
+        return "ghost";
+    }
+  }
+
+  function translateStatus(status: string): string {
+    switch (status) {
+      case "open":
+        return "Offen";
+      case "paid":
+        return "Bezahlt";
+      case "canceled":
+        return "Storniert";
+      default:
+        return "kein Status";
+    }
+  }
+
+  function getItemBadgeVariant(
+    status: string
+  ): "default" | "secondary" | "destructive" | "outline" | "ghost" {
+    switch (status) {
+      case "confirmed":
+        return "default";
+      case "modified":
+        return "secondary";
+      case "new":
+        return "outline";
+      case "canceled":
+      case "refunded":
+        return "destructive";
+      default:
+        return "ghost";
+    }
+  }
+
+  function translateItemStatus(status: string): string {
+    switch (status) {
+      case "new":
+        return "Neu";
+      case "modified":
+        return "Geändert";
+      case "confirmed":
+        return "Bestätigt";
+      case "canceled":
+        return "Storniert";
+      case "refunded":
+        return "Erstattet";
+      default:
+        return "Unbekannt";
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -193,7 +262,8 @@ export default function Transaktionen() {
                               <th className="py-1 pr-4">Produkt</th>
                               <th className="py-1 pr-4">Menge</th>
                               <th className="py-1 pr-4">Preis (CHF)</th>
-                              <th className="py-1 pr-4">Subtotal</th>
+                              <th className="py-1 pr-4">Subtotal (CHF)</th>
+                              <th className="py-1 pr-4">Status</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -212,12 +282,19 @@ export default function Transaktionen() {
                                 <td className="py-1 pr-4">
                                   {(item.subtotal / 100).toFixed(2)}
                                 </td>
+                                <td className="py-1 pr-4">
+                                  <Badge
+                                    variant={getItemBadgeVariant(item.status)}
+                                  >
+                                    {translateItemStatus(item.status)}
+                                  </Badge>
+                                </td>
                               </tr>
                             ))}
                             {!itemsMap[row.original.id] && (
                               <tr>
                                 <td
-                                  colSpan={4}
+                                  colSpan={5}
                                   className="py-2 italic text-muted-foreground"
                                 >
                                   Lade...
