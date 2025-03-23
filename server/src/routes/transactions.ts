@@ -8,7 +8,13 @@ router.get("/", async (req: Request, res: Response) => {
   try {
     const db = await dbPromise;
     const transactions = await db.all(
-      "SELECT * FROM transactions ORDER BY timestamp DESC"
+      `SELECT t.*, 
+          m.first_name || ' ' || m.last_name AS member_name,
+          c.first_name || ' ' || c.last_name AS cashier_name
+       FROM transactions t
+       LEFT JOIN members m ON t.member_id = m.id
+       LEFT JOIN members c ON t.cashier_id = c.id
+       ORDER BY t.timestamp DESC`
     );
     res.json(transactions);
   } catch (error) {
