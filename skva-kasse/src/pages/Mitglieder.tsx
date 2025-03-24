@@ -55,7 +55,7 @@ export default function Mitglieder() {
   const [viewMember, setViewMember] = useState<Member | null>(null);
 
   useEffect(() => {
-    api.get("/members").then((res) => setMembers(res.data));
+    refetchMembers();
     api.get("/member-states").then((res) => setMemberStates(res.data));
   }, []);
 
@@ -83,10 +83,13 @@ export default function Mitglieder() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    api.delete(`/members/${id}`).then(() => {
-      setMembers((prev) => prev.filter((m) => m.id !== id));
-    });
+  const handleDelete = async (id: number) => {
+    try {
+      await api.delete(`/members/${id}`);
+      await refetchMembers();
+    } catch (error) {
+      console.error("Fehler beim Löschen:", error);
+    }
   };
 
   const handleEdit = (id: number) => {
@@ -101,18 +104,20 @@ export default function Mitglieder() {
     };
 
     try {
-      const res = await api.post("/members", payload);
-      const createdId = res.data.member_id;
-      setMembers((prev) => [
-        ...prev,
-        {
-          ...payload,
-          id: createdId,
-          created_at: new Date().toISOString(), // oder hole aus res.data wenn möglich
-        } as Member,
-      ]);
+      await api.post("/members", payload);
+      await refetchMembers(); // Liste aktualisieren
+      setShowModal(false);
     } catch (error) {
       console.error("Fehler beim Erstellen des Mitglieds:", error);
+    }
+  };
+
+  const refetchMembers = async () => {
+    try {
+      const res = await api.get("/members");
+      setMembers(res.data);
+    } catch (error) {
+      console.error("Fehler beim Abrufen der Mitglieder:", error);
     }
   };
 
@@ -279,7 +284,12 @@ export default function Mitglieder() {
                 {viewMember.last_name}
               </p>
               <p>
-                <strong>Geburtsdatum:</strong> {viewMember.birthdate}
+                <strong>Geburtsdatum:</strong>{" "}
+                {new Date(viewMember.birthdate).toLocaleDateString("de-CH", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
               </p>
               <p>
                 <strong>Email:</strong> {viewMember.email || "-"}
@@ -307,7 +317,13 @@ export default function Mitglieder() {
               </p>
               <p>
                 <strong>Erstellt am:</strong>{" "}
-                {new Date(viewMember.created_at).toLocaleDateString()}
+                {new Date(viewMember.created_at).toLocaleString("de-CH", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </p>
             </div>
           )}
