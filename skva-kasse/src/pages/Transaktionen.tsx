@@ -26,7 +26,13 @@ import { ArrowDown, ArrowUp, FileDown } from "lucide-react";
 import api from "@/api";
 
 import DateRangeFilter from "@/components/DateRangeFilter";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 interface Transaction {
   id: number;
@@ -71,11 +77,11 @@ export default function Transaktionen() {
       if (statusFilter && statusFilter !== "all") {
         params.status = statusFilter;
       }
-  
+
       const res = await api.get("/transactions", { params });
       setTransactions(res.data);
     };
-  
+
     fetchTransactions();
   }, [dateRange, statusFilter]);
 
@@ -91,7 +97,31 @@ export default function Transaktionen() {
   const columns: ColumnDef<Transaction>[] = [
     {
       id: "expander",
-      header: "",
+      header: () => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={async () => {
+            const areAnyExpanded = Object.values(expanded).some((v) => v);
+            if (areAnyExpanded) {
+              setExpanded({});
+            } else {
+              const newExpanded: Record<string, boolean> = {};
+              const fetchAll: Promise<void>[] = [];
+
+              for (const row of table.getRowModel().rows) {
+                newExpanded[row.id] = true;
+                fetchAll.push(fetchItems(row.original.id)); // <--- lade Items!
+              }
+
+              setExpanded(newExpanded);
+              await Promise.all(fetchAll); // warte auf alle
+            }
+          }}
+        >
+          {Object.values(expanded).some((v) => v) ? "−" : "+"}
+        </Button>
+      ),
       cell: ({ row }) => (
         <Button
           variant="ghost"
@@ -227,7 +257,36 @@ export default function Transaktionen() {
     }
   }
 
-  function exportCSV() {
+  async function exportCSV() {
+    // 1. Stelle sicher, dass alle Items geladen sind
+    const missingTransactionIds = transactions
+      .map((t) => t.id)
+      .filter((id) => !itemsMap[id]);
+
+    if (missingTransactionIds.length > 0) {
+      const itemRequests = missingTransactionIds.map((id) =>
+        api.get(`/transaction-items/by-transaction/${id}`)
+      );
+
+      const responses = await Promise.all(itemRequests);
+      const newItems: Record<number, TransactionItem[]> = {};
+      responses.forEach((res, index) => {
+        newItems[missingTransactionIds[index]] = res.data;
+      });
+
+      // Items in den aktuellen State einfügen
+      setItemsMap((prev) => ({ ...prev, ...newItems }));
+
+      // Weiter nach dem Update, mit neuem itemsMap arbeiten
+      generateAndDownloadCSV({ ...itemsMap, ...newItems });
+    } else {
+      generateAndDownloadCSV(itemsMap);
+    }
+  }
+
+  function generateAndDownloadCSV(
+    fullItemsMap: Record<number, TransactionItem[]>
+  ) {
     const headers = [
       "Datum/Zeit",
       "Kassierer",
@@ -236,17 +295,53 @@ export default function Transaktionen() {
       "Zahlung",
       "Betrag (CHF)",
       "Status",
+      "Produkte",
+      "Menge",
+      "Preis",
+      "Subtotal",
+      "Status",
     ];
-    const rows = transactions.map((t) => [
-      format(new Date(t.timestamp), "dd.MM.yyyy HH:mm"),
-      t.cashier_name,
-      t.member_name,
-      t.table_number,
-      t.payment_method,
-      (t.total_amount / 100).toFixed(2),
-      translateStatus(t.status),
-    ]);
-    const csv = [headers, ...rows].map((r) => r.join("; ")).join("\n");
+
+    const rows: string[][] = [headers];
+
+    transactions.forEach((t) => {
+      rows.push([
+        format(new Date(t.timestamp), "dd.MM.yyyy HH:mm"),
+        t.cashier_name,
+        t.member_name,
+        t.table_number !== null ? t.table_number.toString() : "",
+        t.payment_method,
+        (t.total_amount / 100).toFixed(2),
+        translateStatus(t.status),
+        "",
+        "",
+        "",
+        "",
+        "",
+      ]);
+
+      const items = fullItemsMap[t.id];
+      if (items?.length) {
+        items.forEach((item) => {
+          rows.push([
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "", // leer lassen für Transaktionszeile
+            item.product_name,
+            item.quantity.toString(),
+            (item.price / 100).toFixed(2),
+            (item.subtotal / 100).toFixed(2),
+            translateItemStatus(item.status),
+          ]);
+        });
+      }
+    });
+
+    const csv = rows.map((r) => r.join("\t")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -273,19 +368,19 @@ export default function Transaktionen() {
         </div>
 
         <Select
-  onValueChange={(value) => setStatusFilter(value)}
-  value={statusFilter}
->
-  <SelectTrigger className="w-[160px]">
-    <SelectValue placeholder="Status filtern" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="all">Alle</SelectItem>
-    <SelectItem value="open">Offen</SelectItem>
-    <SelectItem value="paid">Bezahlt</SelectItem>
-    <SelectItem value="canceled">Storniert</SelectItem>
-  </SelectContent>
-</Select>
+          onValueChange={(value) => setStatusFilter(value)}
+          value={statusFilter}
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Status filtern" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle</SelectItem>
+            <SelectItem value="open">Offen</SelectItem>
+            <SelectItem value="paid">Bezahlt</SelectItem>
+            <SelectItem value="canceled">Storniert</SelectItem>
+          </SelectContent>
+        </Select>
 
         <Button variant="outline" size="sm" onClick={() => exportCSV()}>
           <FileDown />
