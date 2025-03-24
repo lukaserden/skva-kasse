@@ -25,6 +25,8 @@ import {
 import { ArrowDown, ArrowUp, FileDown } from "lucide-react";
 import api from "@/api";
 
+import DateRangeFilter from "@/components/DateRangeFilter";
+
 interface Transaction {
   id: number;
   timestamp: string;
@@ -53,12 +55,23 @@ export default function Transaktionen() {
   const [itemsMap, setItemsMap] = useState<Record<number, TransactionItem[]>>(
     {}
   );
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({ from: undefined, to: undefined });
 
   useEffect(() => {
-    api.get("/transactions").then((res) => {
+    const fetchTransactions = async () => {
+      const params: Record<string, string> = {};
+      if (dateRange.from) params.from = dateRange.from.toISOString();
+      if (dateRange.to) params.to = dateRange.to.toISOString();
+
+      const res = await api.get("/transactions", { params });
       setTransactions(res.data);
-    });
-  }, []);
+    };
+
+    fetchTransactions();
+  }, [dateRange]);
 
   const fetchItems = async (transactionId: number) => {
     if (!itemsMap[transactionId]) {
@@ -248,6 +261,10 @@ export default function Transaktionen() {
           onChange={(e) => setGlobalFilter(e.target.value)}
           className="w-64"
         />
+
+        <div className="flex items-center gap-2">
+          <DateRangeFilter value={dateRange} onChange={setDateRange} />
+        </div>
 
         <Button variant="outline" size="sm" onClick={() => exportCSV()}>
           <FileDown />

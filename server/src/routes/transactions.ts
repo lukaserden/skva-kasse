@@ -7,15 +7,27 @@ const router = Router();
 router.get("/", async (req: Request, res: Response) => {
   try {
     const db = await dbPromise;
-    const transactions = await db.all(
-      `SELECT t.*, 
-          m.first_name || ' ' || m.last_name AS member_name,
-          c.first_name || ' ' || c.last_name AS cashier_name
-       FROM transactions t
-       LEFT JOIN members m ON t.member_id = m.id
-       LEFT JOIN members c ON t.cashier_id = c.id
-       ORDER BY t.timestamp DESC`
-    );
+    const { from, to } = req.query;
+
+    let query = `
+      SELECT t.*, 
+             m.first_name || ' ' || m.last_name AS member_name,
+             c.first_name || ' ' || c.last_name AS cashier_name
+      FROM transactions t
+      LEFT JOIN members m ON t.member_id = m.id
+      LEFT JOIN members c ON t.cashier_id = c.id
+    `;
+
+    const params: any[] = [];
+
+    if (from && to) {
+      query += ` WHERE DATE(t.timestamp) BETWEEN DATE(?) AND DATE(?)`;
+      params.push(from, to);
+    }
+
+    query += ` ORDER BY t.timestamp DESC`;
+
+    const transactions = await db.all(query, params);
     res.json(transactions);
   } catch (error) {
     console.error("Fehler beim Abrufen der Transaktionen:", error);
