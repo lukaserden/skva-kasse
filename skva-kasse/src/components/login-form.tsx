@@ -75,7 +75,9 @@ export function LoginForm({
               />
             </div>
             <div>
-              <Label className="mb-2" htmlFor="password">Passwort</Label>
+              <Label className="mb-2" htmlFor="password">
+                Passwort
+              </Label>
               <Input
                 id="password"
                 type="password"

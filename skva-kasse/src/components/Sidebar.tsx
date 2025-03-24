@@ -4,10 +4,10 @@ import {
   Key,
   LogOut,
   Menu,
-  Package,
   ShoppingCart,
   Users,
-  Calculator
+  Calculator,
+  Tags
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ export default function Sidebar() {
     { to: "/kasse", label: "Kasse", icon: Calculator },
     { to: "/admin", label: "Home", icon: Home },
     { to: "/admin/mitglieder", label: "Mitglieder", icon: Users },
-    { to: "/admin/artikel", label: "Artikel", icon: Package },
+    { to: "/admin/artikel", label: "Artikel", icon: Tags },
     { to: "/admin/transaktionen", label: "Transaktionen", icon: ShoppingCart },
     { to: "/admin/serviceeinheiten", label: "Service", icon: Calendar },
   ];

@@ -1,4 +1,3 @@
-// src/pages/Transaktionen.tsx
 import React, { useEffect, useState } from "react";
 import {
   ColumnDef,
@@ -23,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ArrowDown, ArrowUp, FileDown } from "lucide-react";
 import api from "@/api";
 
 interface Transaction {
@@ -88,34 +88,34 @@ export default function Transaktionen() {
     },
     {
       accessorKey: "timestamp",
-      header: "Datum / Zeit",
+      header: () => "Datum / Zeit",
       cell: ({ getValue }) =>
         format(new Date(getValue() as string), "dd.MM.yyyy HH:mm"),
     },
     {
       accessorKey: "cashier_name",
-      header: "Kassierer",
+      header: () => "Kassierer",
     },
     {
       accessorKey: "member_name",
-      header: "Mitglied",
+      header: () => "Mitglied",
     },
     {
       accessorKey: "table_number",
-      header: "Tisch",
+      header: () => "Tisch",
     },
     {
       accessorKey: "payment_method",
-      header: "Zahlung",
+      header: () => "Zahlung",
     },
     {
       accessorKey: "total_amount",
-      header: "Betrag (CHF)",
+      header: () => "Betrag (CHF)",
       cell: ({ getValue }) => ((getValue() as number) / 100).toFixed(2),
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: () => "Status",
       cell: ({ getValue }) => {
         const status = getValue() as string;
         return (
@@ -208,16 +208,51 @@ export default function Transaktionen() {
     }
   }
 
+  function exportCSV() {
+    const headers = [
+      "Datum/Zeit",
+      "Kassierer",
+      "Mitglied",
+      "Tisch",
+      "Zahlung",
+      "Betrag (CHF)",
+      "Status",
+    ];
+    const rows = transactions.map((t) => [
+      format(new Date(t.timestamp), "dd.MM.yyyy HH:mm"),
+      t.cashier_name,
+      t.member_name,
+      t.table_number,
+      t.payment_method,
+      (t.total_amount / 100).toFixed(2),
+      translateStatus(t.status),
+    ]);
+    const csv = [headers, ...rows].map((r) => r.join("; ")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "transaktionen.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-semibold">Transaktionen</h1>
+      <h1 className="text-xl font-semibold">Transaktionen</h1>
+      <div className="flex justify-between items-center gap-4 flex-wrap">
         <Input
           placeholder="Suchen..."
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
           className="w-64"
         />
+
+        <Button variant="outline" size="sm" onClick={() => exportCSV()}>
+          <FileDown />
+          Export CSV
+        </Button>
       </div>
 
       <div className="border rounded-md">
@@ -226,13 +261,19 @@ export default function Transaktionen() {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                  <TableHead
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="cursor-pointer select-none"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    {{
+                      asc: <ArrowUp className="inline-block ml-1 h-3 w-3" />,
+                      desc: <ArrowDown className="inline-block ml-1 h-3 w-3" />,
+                    }[header.column.getIsSorted() as string] ?? null}
                   </TableHead>
                 ))}
               </TableRow>
@@ -314,7 +355,7 @@ export default function Transaktionen() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex items-center justify-between mt-4 gap-4 flex-wrap">
         <Button
           variant="outline"
           size="sm"
@@ -327,6 +368,20 @@ export default function Transaktionen() {
           Seite {table.getState().pagination.pageIndex + 1} von{" "}
           {table.getPageCount()}
         </span>
+        <div className="flex items-center gap-2">
+          <span>Zeilen pro Seite:</span>
+          <select
+            className="border rounded px-2 py-1"
+            value={table.getState().pagination.pageSize}
+            onChange={(e) => table.setPageSize(Number(e.target.value))}
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
         <Button
           variant="outline"
           size="sm"
