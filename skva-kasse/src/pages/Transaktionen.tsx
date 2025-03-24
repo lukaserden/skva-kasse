@@ -22,7 +22,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowDown, ArrowUp, FileDown } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  FileDown,
+} from "lucide-react";
 import api from "@/api";
 
 import DateRangeFilter from "@/components/DateRangeFilter";
@@ -360,37 +366,45 @@ export default function Transaktionen() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Transaktionen</h1>
-      <div className="flex justify-between items-center gap-4 flex-wrap">
-        <Input
-          placeholder="Suchen..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="w-64"
-        />
-
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-2">
+        {/* Linke Seite: Suchen & Zeitraum */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <Input
+            placeholder="Suchen..."
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="w-64"
+          />
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
         </div>
 
-        <Select
-          onValueChange={(value) => setStatusFilter(value)}
-          value={statusFilter}
-        >
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Status filtern" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle</SelectItem>
-            <SelectItem value="open">Offen</SelectItem>
-            <SelectItem value="paid">Bezahlt</SelectItem>
-            <SelectItem value="canceled">Storniert</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Rechte Seite: Status & Export */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <Select
+            onValueChange={(value) => setStatusFilter(value)}
+            value={statusFilter}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Status filtern" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle</SelectItem>
+              <SelectItem value="open">Offen</SelectItem>
+              <SelectItem value="paid">Bezahlt</SelectItem>
+              <SelectItem value="canceled">Storniert</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Button variant="outline" size="sm" onClick={() => exportCSV()}>
-          <FileDown />
-          Export CSV
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportCSV}
+            className="h-9"
+          >
+            <FileDown className="mr-2 h-6 w-6" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       <div className="border rounded-md">
@@ -507,48 +521,61 @@ export default function Transaktionen() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between mt-4 gap-4 flex-wrap">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Zurück
-        </Button>
-        <span>
-          Seite{" "}
-          {table.getPageCount() === 0
-            ? 0
-            : table.getState().pagination.pageIndex + 1}{" "}
-          von {table.getPageCount()}
-        </span>
-        <div className="flex items-center gap-2">
-          <span>Zeilen pro Seite:</span>
-          <Select
-            value={table.getState().pagination.pageSize.toString()}
-            onValueChange={(value) => table.setPageSize(Number(value))}
+      <div className="grid grid-cols-1 md:grid-cols-3 items-center mt-4 gap-4">
+        {/* Zurück-Button */}
+        <div className="flex justify-start">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
           >
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Zeilen" />
-            </SelectTrigger>
-            <SelectContent>
-              {[5, 10, 20, 50].map((size) => (
-                <SelectItem key={size} value={size.toString()}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Zurück
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Weiter
-        </Button>
+
+        {/* Seite x von y & Zeilen pro Seite */}
+        <div className="flex flex-col items-center text-sm">
+          <span>
+            Seite{" "}
+            {table.getPageCount() === 0
+              ? 0
+              : table.getState().pagination.pageIndex + 1}{" "}
+            von {table.getPageCount()}
+          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <span>Zeilen pro Seite:</span>
+            <Select
+              value={table.getState().pagination.pageSize.toString()}
+              onValueChange={(value) => table.setPageSize(Number(value))}
+            >
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Zeilen" />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 20, 50].map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Weiter-Button */}
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Weiter
+            <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );

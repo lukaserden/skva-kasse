@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, UserPlus } from "lucide-react";
 import MemberActionMenu from "@/components/MemberActionMenu";
 import {
   Dialog,
@@ -281,49 +281,63 @@ export default function Mitglieder() {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between mt-4 gap-4 flex-wrap">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Zurück
-        </Button>
-        <span>
-          Seite{" "}
-          {table.getPageCount() === 0
-            ? 0
-            : table.getState().pagination.pageIndex + 1}{" "}
-          von {table.getPageCount()}
-        </span>
-        <div className="flex items-center gap-2">
-          <span>Zeilen pro Seite:</span>
-          <Select
-            value={table.getState().pagination.pageSize.toString()}
-            onValueChange={(value) => table.setPageSize(Number(value))}
+      <div className="grid grid-cols-3 items-center mt-4 gap-4">
+        {/* Links: Zurück */}
+        <div className="flex justify-start">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
           >
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Zeilen" />
-            </SelectTrigger>
-            <SelectContent>
-              {[5, 10, 20, 50].map((size) => (
-                <SelectItem key={size} value={size.toString()}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            Zurück
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Weiter
-        </Button>
+
+        {/* Mitte: Seite x von y & Zeilen pro Seite */}
+        <div className="flex flex-col items-center text-sm">
+          <span>
+            Seite{" "}
+            {table.getPageCount() === 0
+              ? 0
+              : table.getState().pagination.pageIndex + 1}{" "}
+            von {table.getPageCount()}
+          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <span>Zeilen pro Seite:</span>
+            <Select
+              value={table.getState().pagination.pageSize.toString()}
+              onValueChange={(value) => table.setPageSize(Number(value))}
+            >
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Zeilen" />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 20, 50].map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Rechts: Weiter */}
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Weiter
+            <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
       </div>
+
       <Dialog open={!!viewMember} onOpenChange={() => setViewMember(null)}>
         <DialogContent>
           <DialogHeader>
