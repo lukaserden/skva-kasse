@@ -76,6 +76,10 @@ export default function Mitglieder() {
       if (debouncedSearch) {
         params.search = debouncedSearch;
       }
+  
+      //  künstlicher Delay 
+      await new Promise((resolve) => setTimeout(resolve, 300));
+  
       const res = await api.get("/members", { params });
       setMembers(res.data.data);
       setTotalCount(res.data.total);
@@ -87,9 +91,17 @@ export default function Mitglieder() {
   }, [pageIndex, pageSize, debouncedSearch]);
 
   useEffect(() => {
-    fetchMembers();
-    api.get("/member-states").then((res) => setMemberStates(res.data));
+    // Ladezustand erst NACH debounce starten
+    const run = async () => {
+      await fetchMembers();
+    };
+    run();
   }, [fetchMembers]);
+  
+  // member states nur 1x laden
+  useEffect(() => {
+    api.get("/member-states").then((res) => setMemberStates(res.data));
+  }, []);
 
   const handleCreateMember = async (data: NewMember) => {
     const payload = {
