@@ -1,3 +1,4 @@
+// Mitglieder.tsx
 import { useEffect, useState } from "react";
 import api from "../api";
 import {
@@ -36,24 +37,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-
-interface Member {
-  id: number;
-  first_name: string;
-  last_name: string;
-  birthdate: string;
-  membership_number: string;
-  member_state_id: number;
-  email?: string;
-  phone?: string;
-  discount?: number;
-  is_active?: number;
-  is_service_required?: number;
-}
+import MemberForm from "@/components/MemberForm";
+import { Member, NewMember } from "@/types";
 
 interface MemberState {
   id: number;
@@ -66,26 +52,11 @@ export default function Mitglieder() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [newMember, setNewMember] = useState<Partial<Member>>({
-    first_name: "",
-    last_name: "",
-    birthdate: "",
-    membership_number: "",
-    member_state_id: 1,
-  });
 
   useEffect(() => {
     api.get("/members").then((res) => setMembers(res.data));
     api.get("/member-states").then((res) => setMemberStates(res.data));
   }, []);
-
-  const handleEdit = (id: number) => {
-    console.log("Edit", id);
-  };
-
-  const handleDelete = (id: number) => {
-    console.log("Delete", id);
-  };
 
   const getBadgeVariant = (state: string) => {
     switch (state.toLowerCase()) {
@@ -101,6 +72,39 @@ export default function Mitglieder() {
         return "ghost";
       default:
         return "secondary";
+    }
+  };
+
+  const handleDelete = (id: number) => {
+    api.delete(`/members/${id}`).then(() => {
+      setMembers((prev) => prev.filter((m) => m.id !== id));
+    });
+  };
+
+  const handleEdit = (id: number) => {
+    console.log("Edit member with id:", id);
+  };
+
+  const handleCreateMember = async (data: NewMember) => {
+    const payload = {
+      ...data,
+      is_active: data.is_active ? 1 : 0,
+      is_service_required: data.is_service_required ? 1 : 0,
+    };
+
+    try {
+      const res = await api.post("/members", payload);
+      const createdId = res.data.member_id;
+      setMembers((prev) => [
+        ...prev,
+        {
+          ...payload,
+          id: createdId,
+          created_at: new Date().toISOString(), // oder hole aus res.data wenn möglich
+        } as Member,
+      ]);
+    } catch (error) {
+      console.error("Fehler beim Erstellen des Mitglieds:", error);
     }
   };
 
@@ -168,199 +172,11 @@ export default function Mitglieder() {
             <DialogHeader>
               <DialogTitle>Neues Mitglied hinzufügen</DialogTitle>
             </DialogHeader>
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                try {
-                  const response = await api.post("/members", newMember);
-                  const createdId = response.data.member_id;
-                  setMembers((prev) => [
-                    ...prev,
-                    { ...newMember, id: createdId } as Member,
-                  ]);
-                  setNewMember({
-                    first_name: "",
-                    last_name: "",
-                    birthdate: "",
-                    membership_number: "",
-                    email: "",
-                    phone: "",
-                    discount: 0,
-                    is_active: 1,
-                    is_service_required: 1,
-                    member_state_id: 1,
-                  });
-                  setShowModal(false);
-                } catch (error) {
-                  console.error("Fehler beim Erstellen des Mitglieds:", error);
-                }
-              }}
-              className="space-y-4"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="first_name">Vorname</Label>
-                <Input
-                  id="first_name"
-                  name="first_name"
-                  value={newMember.first_name || ""}
-                  onChange={(e) =>
-                    setNewMember((prev) => ({
-                      ...prev,
-                      first_name: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="last_name">Nachname</Label>
-                <Input
-                  id="last_name"
-                  name="last_name"
-                  value={newMember.last_name || ""}
-                  onChange={(e) =>
-                    setNewMember((prev) => ({
-                      ...prev,
-                      last_name: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="birthdate">Geburtsdatum</Label>
-                <Input
-                  id="birthdate"
-                  name="birthdate"
-                  type="date"
-                  value={newMember.birthdate || ""}
-                  onChange={(e) =>
-                    setNewMember((prev) => ({
-                      ...prev,
-                      birthdate: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="membership_number">Mitgliedsnummer</Label>
-                <Input
-                  id="membership_number"
-                  name="membership_number"
-                  value={newMember.membership_number || ""}
-                  onChange={(e) =>
-                    setNewMember((prev) => ({
-                      ...prev,
-                      membership_number: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">E-Mail (optional)</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={newMember.email || ""}
-                  onChange={(e) =>
-                    setNewMember((prev) => ({ ...prev, email: e.target.value }))
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefon (optional)</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={newMember.phone || ""}
-                  onChange={(e) =>
-                    setNewMember((prev) => ({ ...prev, phone: e.target.value }))
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="discount">Rabatt (%)</Label>
-                <Input
-                  id="discount"
-                  name="discount"
-                  type="number"
-                  min={0}
-                  value={newMember.discount?.toString() || "0"}
-                  onChange={(e) =>
-                    setNewMember((prev) => ({
-                      ...prev,
-                      discount: Number(e.target.value),
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  value={newMember.member_state_id?.toString() ?? "1"}
-                  onValueChange={(value) =>
-                    setNewMember((prev) => ({
-                      ...prev,
-                      member_state_id: Number(value),
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Status auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {memberStates.map((state) => (
-                      <SelectItem key={state.id} value={state.id.toString()}>
-                        {state.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 pt-2">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="is_active"
-                    checked={newMember.is_active === 1}
-                    onCheckedChange={(value) =>
-                      setNewMember((prev) => ({
-                        ...prev,
-                        is_active: value ? 1 : 0,
-                      }))
-                    }
-                  />
-                  <Label htmlFor="is_active">Aktiv</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="is_service_required"
-                    checked={newMember.is_service_required === 1}
-                    onCheckedChange={(value) =>
-                      setNewMember((prev) => ({
-                        ...prev,
-                        is_service_required: value ? 1 : 0,
-                      }))
-                    }
-                  />
-                  <Label htmlFor="is_service_required">Dienstpflicht</Label>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button type="submit">Speichern</Button>
-              </DialogFooter>
-            </form>
+            <MemberForm
+              onSave={handleCreateMember}
+              memberStates={memberStates}
+              onClose={() => setShowModal(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>
