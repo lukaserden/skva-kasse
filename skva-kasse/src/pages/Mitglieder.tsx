@@ -1,4 +1,3 @@
-// Mitglieder.tsx
 import { useEffect, useState } from "react";
 import api from "../api";
 import {
@@ -29,7 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, UserPlus } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, UserPlus } from "lucide-react";
 import MemberActionMenu from "@/components/MemberActionMenu";
 import {
   Dialog,
@@ -156,16 +155,17 @@ export default function Mitglieder() {
   const columns: ColumnDef<Member>[] = [
     {
       accessorKey: "membership_number",
-      header: "Mitgliedsnummer",
+      header: () => "Mitgliedsnummer",
+      cell: ({ getValue }) => getValue(),
     },
     {
       accessorFn: (row) => `${row.first_name} ${row.last_name}`,
       id: "name",
-      header: "Name",
+      header: () => "Name",
     },
     {
       id: "status",
-      header: "Status",
+      header: () => "Status",
       cell: ({ row }) => {
         const member = row.original;
         const state = memberStates.find((s) => s.id === member.member_state_id);
@@ -175,7 +175,7 @@ export default function Mitglieder() {
     },
     {
       id: "actions",
-      header: "Aktionen",
+      header: () => "Aktionen",
       cell: ({ row }) => (
         <MemberActionMenu
           onView={() => handleView(row.original.id)}
@@ -212,7 +212,7 @@ export default function Mitglieder() {
           open={showModal || !!editMember}
           onOpenChange={(open) => {
             setShowModal(open);
-            if (!open) setEditMember(null); // Reset edit mode
+            if (!open) setEditMember(null);
           }}
         >
           <DialogTrigger asChild>
@@ -223,9 +223,7 @@ export default function Mitglieder() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editMember
-                  ? "Mitglied bearbeiten"
-                  : "Neues Mitglied hinzufügen"}
+                {editMember ? "Mitglied bearbeiten" : "Neues Mitglied hinzufügen"}
               </DialogTitle>
             </DialogHeader>
             <MemberForm
@@ -262,6 +260,10 @@ export default function Mitglieder() {
                       header.column.columnDef.header,
                       header.getContext()
                     )}
+                    {{
+                      asc: <ArrowUp className="inline-block ml-1 h-3 w-3" />,
+                      desc: <ArrowDown className="inline-block ml-1 h-3 w-3" />,
+                    }[header.column.getIsSorted() as string] ?? null}
                   </TableHead>
                 ))}
               </TableRow>
@@ -282,7 +284,6 @@ export default function Mitglieder() {
       </div>
 
       <div className="grid grid-cols-3 items-center mt-4 gap-4">
-        {/* Links: Zurück */}
         <div className="flex justify-start">
           <Button
             variant="outline"
@@ -295,14 +296,9 @@ export default function Mitglieder() {
           </Button>
         </div>
 
-        {/* Mitte: Seite x von y & Zeilen pro Seite */}
         <div className="flex flex-col items-center text-sm">
           <span>
-            Seite{" "}
-            {table.getPageCount() === 0
-              ? 0
-              : table.getState().pagination.pageIndex + 1}{" "}
-            von {table.getPageCount()}
+            Seite {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} von {table.getPageCount()}
           </span>
           <div className="flex items-center gap-2 mt-1">
             <span>Zeilen pro Seite:</span>
@@ -324,7 +320,6 @@ export default function Mitglieder() {
           </div>
         </div>
 
-        {/* Rechts: Weiter */}
         <div className="flex justify-end">
           <Button
             variant="outline"
@@ -345,52 +340,16 @@ export default function Mitglieder() {
           </DialogHeader>
           {viewMember && (
             <div className="space-y-2 text-sm">
-              <p>
-                <strong>Name:</strong> {viewMember.first_name}{" "}
-                {viewMember.last_name}
-              </p>
-              <p>
-                <strong>Geburtsdatum:</strong>{" "}
-                {new Date(viewMember.birthdate).toLocaleDateString("de-CH", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
-              </p>
-              <p>
-                <strong>Email:</strong> {viewMember.email || "-"}
-              </p>
-              <p>
-                <strong>Telefon:</strong> {viewMember.phone || "-"}
-              </p>
-              <p>
-                <strong>Mitgliedsnummer:</strong> {viewMember.membership_number}
-              </p>
-              <p>
-                <strong>Status:</strong>{" "}
-                {memberStates.find((s) => s.id === viewMember.member_state_id)
-                  ?.name || "unbekannt"}
-              </p>
-              <p>
-                <strong>Rabatt:</strong> {viewMember.discount ?? 0}%
-              </p>
-              <p>
-                <strong>Aktiv:</strong> {viewMember.is_active ? "Ja" : "Nein"}
-              </p>
-              <p>
-                <strong>Dienstpflicht:</strong>{" "}
-                {viewMember.is_service_required ? "Ja" : "Nein"}
-              </p>
-              <p>
-                <strong>Erstellt am:</strong>{" "}
-                {new Date(viewMember.created_at).toLocaleString("de-CH", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
+              <p><strong>Name:</strong> {viewMember.first_name} {viewMember.last_name}</p>
+              <p><strong>Geburtsdatum:</strong> {new Date(viewMember.birthdate).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}</p>
+              <p><strong>Email:</strong> {viewMember.email || "-"}</p>
+              <p><strong>Telefon:</strong> {viewMember.phone || "-"}</p>
+              <p><strong>Mitgliedsnummer:</strong> {viewMember.membership_number}</p>
+              <p><strong>Status:</strong> {memberStates.find((s) => s.id === viewMember.member_state_id)?.name || "unbekannt"}</p>
+              <p><strong>Rabatt:</strong> {viewMember.discount ?? 0}%</p>
+              <p><strong>Aktiv:</strong> {viewMember.is_active ? "Ja" : "Nein"}</p>
+              <p><strong>Dienstpflicht:</strong> {viewMember.is_service_required ? "Ja" : "Nein"}</p>
+              <p><strong>Erstellt am:</strong> {new Date(viewMember.created_at).toLocaleString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
             </div>
           )}
         </DialogContent>
