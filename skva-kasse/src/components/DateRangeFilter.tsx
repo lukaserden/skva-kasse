@@ -61,8 +61,8 @@ export default function DateRangeFilter({ value, onChange }: Props) {
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
-          className={cn("w-[280px] text-left font-normal relative pr-10 pl-8")}
+          variant="outline"
+          className={cn("w-[220px] text-left font-normal relative pr-10 pl-6")}
         >
           <CalendarSearch className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           {label}
