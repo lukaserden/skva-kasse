@@ -3,10 +3,25 @@ import dbPromise from "../db/database";
 
 const router = Router();
 
-/** GET: Alle Mitglieder abrufen */
+/** GET: Alle Mitglieder abrufen (mit optionalem Suchbegriff + Pagination) */
 router.get("/", async (req: Request, res: Response): Promise<any> => {
   try {
     const db = await dbPromise;
+    const { search = "", limit = 50, offset = 0 } = req.query;
+
+    const params: any[] = [];
+    let whereClause = "";
+
+    if (search) {
+      whereClause = `WHERE LOWER(m.first_name || ' ' || m.last_name) LIKE ?`;
+      params.push(`%${(search as string).toLowerCase()}%`);
+    }
+
+    const total = await db.get(
+      `SELECT COUNT(*) as count FROM members m ${whereClause}`,
+      params
+    );
+
     const members = await db.all(
       `SELECT 
          m.*, 
@@ -14,47 +29,18 @@ router.get("/", async (req: Request, res: Response): Promise<any> => {
        FROM 
          members m
        JOIN 
-         member_states ms 
-       ON 
-         m.member_state_id = ms.id
+         member_states ms ON m.member_state_id = ms.id
+       ${whereClause}
        ORDER BY 
-         m.last_name ASC, m.first_name ASC`
+         m.last_name ASC, m.first_name ASC
+       LIMIT ? OFFSET ?`,
+      [...params, Number(limit), Number(offset)]
     );
-    res.json(members);
+
+    res.json({ data: members, total: total.count });
   } catch (error) {
     console.error("Fehler beim Abrufen der Mitglieder:", error);
     res.status(500).json({ error: "Fehler beim Abrufen der Mitglieder" });
-  }
-});
-
-/** GET by ID: Einzelnes Mitglied abrufen */
-router.get("/:id", async (req: Request, res: Response): Promise<any> => {
-  try {
-    const { id } = req.params;
-    const db = await dbPromise;
-    const member = await db.get(
-      `SELECT 
-           m.*, 
-           ms.name AS member_state_name 
-         FROM 
-           members m 
-         JOIN 
-           member_states ms 
-         ON 
-           m.member_state_id = ms.id 
-         WHERE 
-           m.id = ?`,
-      [id]
-    );
-
-    if (!member) {
-      return res.status(404).json({ error: "Mitglied nicht gefunden" });
-    }
-
-    res.json(member);
-  } catch (error) {
-    console.error("Fehler beim Abrufen des Mitglieds:", error);
-    res.status(500).json({ error: "Fehler beim Abrufen des Mitglieds" });
   }
 });
 

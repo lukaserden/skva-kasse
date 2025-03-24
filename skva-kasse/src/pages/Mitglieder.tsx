@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import api from "../api";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
+  getPaginationRowModel,
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
@@ -28,7 +27,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, UserPlus } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  UserPlus,
+} from "lucide-react";
 import MemberActionMenu from "@/components/MemberActionMenu";
 import {
   Dialog,
@@ -40,6 +45,7 @@ import {
 import MemberForm from "@/components/MemberForm";
 import { Member, NewMember } from "@/types";
 import { toast } from "sonner";
+import useDebouncedValue from "@/lib/UseDebounceValue";
 
 interface MemberState {
   id: number;
@@ -50,59 +56,40 @@ export default function Mitglieder() {
   const [members, setMembers] = useState<Member[]>([]);
   const [memberStates, setMemberStates] = useState<MemberState[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300); // <- Debounce
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [viewMember, setViewMember] = useState<Member | null>(null);
   const [editMember, setEditMember] = useState<Member | null>(null);
 
-  useEffect(() => {
-    refetchMembers();
-    api.get("/member-states").then((res) => setMemberStates(res.data));
-  }, []);
-
-  const getBadgeVariant = (state: string) => {
-    switch (state.toLowerCase()) {
-      case "aktiv":
-        return "default";
-      case "passiv":
-        return "secondary";
-      case "ehrenmitglied":
-        return "outline";
-      case "gesperrt":
-        return "destructive";
-      case "inaktiv":
-        return "ghost";
-      default:
-        return "secondary";
-    }
-  };
-
-  const handleView = (id: number) => {
-    const member = members.find((m) => m.id === id);
-    if (member) {
-      setViewMember(member);
-    }
-  };
-
-  const handleDelete = async (id: number) => {
+  const fetchMembers = useCallback(async () => {
+    setLoading(true);
     try {
-      await api.delete(`/members/${id}`);
-      await refetchMembers();
-
-      toast.success("Mitglied erfolgreich gelöscht");
+      const params: Record<string, string> = {
+        limit: pageSize.toString(),
+        offset: (pageIndex * pageSize).toString(),
+      };
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
+      }
+      const res = await api.get("/members", { params });
+      setMembers(res.data.data);
+      setTotalCount(res.data.total);
     } catch (error) {
-      console.error("Fehler beim Löschen:", error);
-      toast.error("Fehler beim Löschen des Mitglieds");
+      console.error("Fehler beim Abrufen der Mitglieder:", error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [pageIndex, pageSize, debouncedSearch]);
 
-  const handleEdit = (id: number) => {
-    const member = members.find((m) => m.id === id);
-    if (member) {
-      setEditMember(member);
-      setShowModal(true);
-    }
-  };
+  useEffect(() => {
+    fetchMembers();
+    api.get("/member-states").then((res) => setMemberStates(res.data));
+  }, [fetchMembers]);
 
   const handleCreateMember = async (data: NewMember) => {
     const payload = {
@@ -110,25 +97,14 @@ export default function Mitglieder() {
       is_active: data.is_active ? 1 : 0,
       is_service_required: data.is_service_required ? 1 : 0,
     };
-
     try {
       await api.post("/members", payload);
-      await refetchMembers();
+      await fetchMembers();
       setShowModal(false);
-
       toast.success("Mitglied erfolgreich erstellt");
     } catch (error) {
       console.error("Fehler beim Erstellen:", error);
       toast.error("Fehler beim Erstellen des Mitglieds");
-    }
-  };
-
-  const refetchMembers = async () => {
-    try {
-      const res = await api.get("/members");
-      setMembers(res.data);
-    } catch (error) {
-      console.error("Fehler beim Abrufen der Mitglieder:", error);
     }
   };
 
@@ -139,10 +115,8 @@ export default function Mitglieder() {
         is_active: data.is_active ? 1 : 0,
         is_service_required: data.is_service_required ? 1 : 0,
       };
-
       await api.put(`/members/${data.id}`, payload);
-      await refetchMembers();
-
+      await fetchMembers();
       setEditMember(null);
       setShowModal(false);
       toast.success("Mitglied erfolgreich aktualisiert");
@@ -152,11 +126,21 @@ export default function Mitglieder() {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    try {
+      await api.delete(`/members/${id}`);
+      await fetchMembers();
+      toast.success("Mitglied erfolgreich gelöscht");
+    } catch (error) {
+      console.error("Fehler beim Löschen:", error);
+      toast.error("Fehler beim Löschen des Mitglieds");
+    }
+  };
+
   const columns: ColumnDef<Member>[] = [
     {
       accessorKey: "membership_number",
       header: () => "Mitgliedsnummer",
-      cell: ({ getValue }) => getValue(),
     },
     {
       accessorFn: (row) => `${row.first_name} ${row.last_name}`,
@@ -178,8 +162,11 @@ export default function Mitglieder() {
       header: () => "Aktionen",
       cell: ({ row }) => (
         <MemberActionMenu
-          onView={() => handleView(row.original.id)}
-          onEdit={() => handleEdit(row.original.id)}
+          onView={() => setViewMember(row.original)}
+          onEdit={() => {
+            setEditMember(row.original);
+            setShowModal(true);
+          }}
           onDelete={() => handleDelete(row.original.id)}
         />
       ),
@@ -189,14 +176,42 @@ export default function Mitglieder() {
   const table = useReactTable({
     data: members,
     columns,
-    state: { sorting, globalFilter },
+    state: {
+      sorting,
+      pagination: { pageIndex, pageSize },
+    },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize })
+          : updater;
+      setPageIndex(next.pageIndex);
+      setPageSize(next.pageSize);
+    },
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: Math.ceil(totalCount / pageSize),
   });
+
+  const getBadgeVariant = (state: string) => {
+    switch (state.toLowerCase()) {
+      case "aktiv":
+        return "default";
+      case "passiv":
+        return "secondary";
+      case "ehrenmitglied":
+        return "outline";
+      case "gesperrt":
+        return "destructive";
+      case "inaktiv":
+        return "ghost";
+      default:
+        return "secondary";
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -204,8 +219,11 @@ export default function Mitglieder() {
       <div className="flex justify-between items-center gap-4 flex-wrap">
         <Input
           placeholder="Suchen..."
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPageIndex(0);
+          }}
           className="w-64"
         />
         <Dialog
@@ -223,17 +241,17 @@ export default function Mitglieder() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editMember ? "Mitglied bearbeiten" : "Neues Mitglied hinzufügen"}
+                {editMember
+                  ? "Mitglied bearbeiten"
+                  : "Neues Mitglied hinzufügen"}
               </DialogTitle>
             </DialogHeader>
             <MemberForm
-              onSave={(data) => {
-                if ("id" in data) {
-                  return handleUpdateMember(data);
-                } else {
-                  return handleCreateMember(data);
-                }
-              }}
+              onSave={(data) =>
+                "id" in data
+                  ? handleUpdateMember(data)
+                  : handleCreateMember(data)
+              }
               memberStates={memberStates}
               onClose={() => {
                 setShowModal(false);
@@ -270,15 +288,39 @@ export default function Mitglieder() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+            {loading ? (
+              [...Array(5)].map((_, i) => (
+                <TableRow key={`skeleton-${i}`}>
+                  {columns.map((_, j) => (
+                    <TableCell key={`skeleton-cell-${j}`}>
+                      <div className="h-4 bg-slate-200 rounded animate-pulse" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : members.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-6"
+                >
+                  Keine Mitglieder gefunden.
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -291,14 +333,17 @@ export default function Mitglieder() {
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Zurück
+            <ArrowLeft className="mr-1 h-4 w-4" /> Zurück
           </Button>
         </div>
 
         <div className="flex flex-col items-center text-sm">
           <span>
-            Seite {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} von {table.getPageCount()}
+            Seite{" "}
+            {table.getPageCount() === 0
+              ? 0
+              : table.getState().pagination.pageIndex + 1}{" "}
+            von {table.getPageCount()}
           </span>
           <div className="flex items-center gap-2 mt-1">
             <span>Zeilen pro Seite:</span>
@@ -327,8 +372,7 @@ export default function Mitglieder() {
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Weiter
-            <ArrowRight className="ml-1 h-4 w-4" />
+            Weiter <ArrowRight className="ml-1 h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -340,16 +384,42 @@ export default function Mitglieder() {
           </DialogHeader>
           {viewMember && (
             <div className="space-y-2 text-sm">
-              <p><strong>Name:</strong> {viewMember.first_name} {viewMember.last_name}</p>
-              <p><strong>Geburtsdatum:</strong> {new Date(viewMember.birthdate).toLocaleDateString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric" })}</p>
-              <p><strong>Email:</strong> {viewMember.email || "-"}</p>
-              <p><strong>Telefon:</strong> {viewMember.phone || "-"}</p>
-              <p><strong>Mitgliedsnummer:</strong> {viewMember.membership_number}</p>
-              <p><strong>Status:</strong> {memberStates.find((s) => s.id === viewMember.member_state_id)?.name || "unbekannt"}</p>
-              <p><strong>Rabatt:</strong> {viewMember.discount ?? 0}%</p>
-              <p><strong>Aktiv:</strong> {viewMember.is_active ? "Ja" : "Nein"}</p>
-              <p><strong>Dienstpflicht:</strong> {viewMember.is_service_required ? "Ja" : "Nein"}</p>
-              <p><strong>Erstellt am:</strong> {new Date(viewMember.created_at).toLocaleString("de-CH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+              <p>
+                <strong>Name:</strong> {viewMember.first_name}{" "}
+                {viewMember.last_name}
+              </p>
+              <p>
+                <strong>Geburtsdatum:</strong>{" "}
+                {new Date(viewMember.birthdate).toLocaleDateString("de-CH")}
+              </p>
+              <p>
+                <strong>Email:</strong> {viewMember.email || "-"}
+              </p>
+              <p>
+                <strong>Telefon:</strong> {viewMember.phone || "-"}
+              </p>
+              <p>
+                <strong>Mitgliedsnummer:</strong> {viewMember.membership_number}
+              </p>
+              <p>
+                <strong>Status:</strong>{" "}
+                {memberStates.find((s) => s.id === viewMember.member_state_id)
+                  ?.name || "unbekannt"}
+              </p>
+              <p>
+                <strong>Rabatt:</strong> {viewMember.discount ?? 0}%
+              </p>
+              <p>
+                <strong>Aktiv:</strong> {viewMember.is_active ? "Ja" : "Nein"}
+              </p>
+              <p>
+                <strong>Dienstpflicht:</strong>{" "}
+                {viewMember.is_service_required ? "Ja" : "Nein"}
+              </p>
+              <p>
+                <strong>Erstellt am:</strong>{" "}
+                {new Date(viewMember.created_at).toLocaleString("de-CH")}
+              </p>
             </div>
           )}
         </DialogContent>

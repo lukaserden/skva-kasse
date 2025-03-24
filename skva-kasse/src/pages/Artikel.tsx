@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import api from "@/api";
+import useDebouncedValue from "@/lib/UseDebounceValue";
 import {
   Table,
   TableHeader,
@@ -42,28 +43,44 @@ interface Artikel {
   updated_at: string;
 }
 
+interface ArtikelResponse {
+  data: Artikel[];
+  total: number;
+}
+
 export default function ArtikelListe() {
   const [artikel, setArtikel] = useState<Artikel[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const [loading, setLoading] = useState(true);
 
   const fetchArtikel = useCallback(async () => {
-    const params: Record<string, string> = {
-      limit: pageSize.toString(),
-      offset: (pageIndex * pageSize).toString(),
-    };
+    setLoading(true);
+    try {
+      const params: Record<string, string> = {
+        limit: pageSize.toString(),
+        offset: (pageIndex * pageSize).toString(),
+      };
 
-    if (search) {
-      params.search = search;
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const res = await api.get<ArtikelResponse>("/products", { params });
+      setArtikel(res.data.data);
+      setTotalCount(res.data.total);
+    } catch (err) {
+      console.error("Fehler beim Laden:", err);
+    } finally {
+      setLoading(false);
     }
-
-    const res = await api.get("/products", { params });
-    setArtikel(res.data.data);
-    setTotalCount(res.data.total);
-  }, [pageIndex, pageSize, search]);
+  }, [pageIndex, pageSize, debouncedSearch]);
 
   useEffect(() => {
     fetchArtikel();
@@ -127,7 +144,10 @@ export default function ArtikelListe() {
     },
     onSortingChange: setSorting,
     onPaginationChange: (updater) => {
-      const next = typeof updater === "function" ? updater({ pageIndex, pageSize }) : updater;
+      const next =
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize })
+          : updater;
       setPageIndex(next.pageIndex);
       setPageSize(next.pageSize);
     },
@@ -142,7 +162,9 @@ export default function ArtikelListe() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Artikel</h1>
-      <p className="text-muted-foreground">Verwaltung der Artikel und Produkte.</p>
+      <p className="text-muted-foreground">
+        Verwaltung der Artikel und Produkte.
+      </p>
 
       <Input
         placeholder="Artikel suchen..."
@@ -165,7 +187,10 @@ export default function ArtikelListe() {
                     onClick={header.column.getToggleSortingHandler()}
                     className="cursor-pointer select-none"
                   >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                     {{
                       asc: <ArrowUp className="inline-block ml-1 h-3 w-3" />,
                       desc: <ArrowDown className="inline-block ml-1 h-3 w-3" />,
@@ -176,15 +201,39 @@ export default function ArtikelListe() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+            {loading ? (
+              [...Array(5)].map((_, i) => (
+                <TableRow key={`skeleton-${i}`}>
+                  {columns.map((_col, j) => (
+                    <TableCell key={`skeleton-cell-${j}`}>
+                      <div className="h-4 bg-slate-200 rounded animate-pulse" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : artikel.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-6"
+                >
+                  Keine Artikel gefunden.
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -203,7 +252,11 @@ export default function ArtikelListe() {
 
         <div className="flex flex-col items-center text-sm">
           <span>
-            Seite {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} von {table.getPageCount()}
+            Seite{" "}
+            {table.getPageCount() === 0
+              ? 0
+              : table.getState().pagination.pageIndex + 1}{" "}
+            von {table.getPageCount()}
           </span>
           <div className="flex items-center gap-2 mt-1">
             <span>Zeilen pro Seite:</span>

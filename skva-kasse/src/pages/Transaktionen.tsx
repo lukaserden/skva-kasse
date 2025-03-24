@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -30,7 +30,6 @@ import {
   FileDown,
 } from "lucide-react";
 import api from "@/api";
-
 import DateRangeFilter from "@/components/DateRangeFilter";
 import {
   Select,
@@ -41,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import DelayedSkeleton from "@/components/DelayedSkeleton";
+import useDebounceValue from "@/lib/UseDebounceValue";
 
 interface Transaction {
   id: number;
@@ -68,20 +68,17 @@ export default function Transaktionen() {
   const [expanded, setExpanded] = useState({});
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [itemsMap, setItemsMap] = useState<Record<number, TransactionItem[]>>(
-    {}
-  );
-  const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({ from: undefined, to: undefined });
+  const debouncedFilter = useDebounceValue(globalFilter, 400);
+  const [itemsMap, setItemsMap] = useState<Record<number, TransactionItem[]>>({});
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
   const [statusFilter, setStatusFilter] = useState("");
 
-  // 💡 Pagination-Zustände aus Table
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const setLoading = useState(true)[1];
 
-  const fetchTransactions = React.useCallback(async () => {
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
     const params: Record<string, string> = {
       limit: pageSize.toString(),
       offset: (pageIndex * pageSize).toString(),
@@ -90,11 +87,18 @@ export default function Transaktionen() {
     if (dateRange.from) params.from = dateRange.from.toISOString();
     if (dateRange.to) params.to = dateRange.to.toISOString();
     if (statusFilter && statusFilter !== "all") params.status = statusFilter;
+    if (debouncedFilter) params.search = debouncedFilter;
 
-    const res = await api.get("/transactions", { params });
-    setTransactions(res.data.data);
-    setTotalCount(res.data.total);
-  }, [dateRange, statusFilter, pageIndex, pageSize]);
+    try {
+      const res = await api.get("/transactions", { params });
+      setTransactions(res.data.data);
+      setTotalCount(res.data.total);
+    } catch (err) {
+      console.error("Fehler beim Abrufen der Transaktionen:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoading, pageSize, pageIndex, dateRange.from, dateRange.to, statusFilter, debouncedFilter]);
 
   useEffect(() => {
     fetchTransactions();
@@ -388,7 +392,6 @@ export default function Transaktionen() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Transaktionen</h1>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-2">
-        {/* Linke Seite: Suchen & Zeitraum */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
           <Input
             placeholder="Suchen..."
@@ -399,7 +402,6 @@ export default function Transaktionen() {
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
         </div>
 
-        {/* Rechte Seite: Status & Export */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
           <Select
             onValueChange={(value) => setStatusFilter(value)}
