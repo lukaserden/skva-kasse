@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -9,33 +9,32 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Member, NewMember } from "@/types";
 
 interface MemberState {
   id: number;
   name: string;
 }
 
-interface NewMember {
-  first_name: string;
-  last_name: string;
-  birthdate: string;
-  email?: string;
-  phone?: string;
-  membership_number: string;
-  member_state_id: number;
-  discount: number;
-  is_active: boolean;
-  is_service_required: boolean;
-}
-
 interface MemberFormProps {
   memberStates: MemberState[];
-  onSave: (newMember: NewMember) => void;
+  onSave: (data: NewMember | Member) => void;
   onClose?: () => void;
+  initialData?: Partial<Member>; // optional, für Bearbeiten
 }
 
-export default function MemberForm({ memberStates, onSave, onClose }: MemberFormProps) {
-  const [formData, setFormData] = useState<NewMember>({
+// Hilfstyp für das Formular: erlaubt unvollständige Member-Daten + optional id + created_at
+type MemberFormData = Omit<Partial<Member>, "id" | "created_at"> & {
+  id?: number;
+  created_at?: string;
+};
+
+export default function MemberForm({
+  memberStates,
+  onSave,
+  initialData,
+}: MemberFormProps) {
+  const defaultValues: MemberFormData = {
     first_name: "",
     last_name: "",
     birthdate: "",
@@ -44,12 +43,26 @@ export default function MemberForm({ memberStates, onSave, onClose }: MemberForm
     membership_number: "",
     member_state_id: 1,
     discount: 0,
-    is_active: true,
-    is_service_required: true,
+    is_active: 1,
+    is_service_required: 1,
+  };
+
+  const [formData, setFormData] = useState<MemberFormData>({
+    ...defaultValues,
+    ...(initialData || {}),
   });
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        ...prev,
+        ...initialData,
+      }));
+    }
+  }, [initialData]);
+
   const handleChange = (
-    field: keyof NewMember,
+    field: keyof MemberFormData,
     value: string | number | boolean
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -57,8 +70,7 @@ export default function MemberForm({ memberStates, onSave, onClose }: MemberForm
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
-    if (onClose) onClose(); // Modal schliessen nach dem Speichern
+    onSave(formData as Member | NewMember); // jetzt sicher, alle Pflichtfelder vorhanden
   };
 
   return (
@@ -86,7 +98,7 @@ export default function MemberForm({ memberStates, onSave, onClose }: MemberForm
         <label className="block text-sm font-medium mb-1">Geburtsdatum</label>
         <Input
           type="date"
-          value={formData.birthdate}
+          value={formData.birthdate?.substring(0, 10)}
           onChange={(e) => handleChange("birthdate", e.target.value)}
           required
         />
@@ -109,7 +121,7 @@ export default function MemberForm({ memberStates, onSave, onClose }: MemberForm
             E-Mail (optional)
           </label>
           <Input
-            value={formData.email}
+            value={formData.email || ""}
             onChange={(e) => handleChange("email", e.target.value)}
           />
         </div>
@@ -118,7 +130,7 @@ export default function MemberForm({ memberStates, onSave, onClose }: MemberForm
             Telefon (optional)
           </label>
           <Input
-            value={formData.phone}
+            value={formData.phone || ""}
             onChange={(e) => handleChange("phone", e.target.value)}
           />
         </div>
@@ -128,7 +140,7 @@ export default function MemberForm({ memberStates, onSave, onClose }: MemberForm
         <label className="block text-sm font-medium mb-1">Rabatt (%)</label>
         <Input
           type="number"
-          value={formData.discount}
+          value={formData.discount ?? 0}
           onChange={(e) => handleChange("discount", Number(e.target.value))}
         />
       </div>
@@ -136,7 +148,7 @@ export default function MemberForm({ memberStates, onSave, onClose }: MemberForm
       <div>
         <label className="block text-sm font-medium mb-1">Status</label>
         <Select
-          value={formData.member_state_id.toString()}
+          value={formData.member_state_id?.toString() || "1"}
           onValueChange={(val) => handleChange("member_state_id", Number(val))}
         >
           <SelectTrigger>
@@ -155,14 +167,14 @@ export default function MemberForm({ memberStates, onSave, onClose }: MemberForm
       <div className="flex flex-col md:flex-row gap-4 mt-4">
         <label className="flex items-center gap-2">
           <Switch
-            checked={formData.is_active}
+            checked={!!formData.is_active}
             onCheckedChange={(val) => handleChange("is_active", val)}
           />
           Aktiv
         </label>
         <label className="flex items-center gap-2">
           <Switch
-            checked={formData.is_service_required}
+            checked={!!formData.is_service_required}
             onCheckedChange={(val) => handleChange("is_service_required", val)}
           />
           Dienstpflicht

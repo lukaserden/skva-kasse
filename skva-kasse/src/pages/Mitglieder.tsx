@@ -54,6 +54,7 @@ export default function Mitglieder() {
   const [globalFilter, setGlobalFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [viewMember, setViewMember] = useState<Member | null>(null);
+  const [editMember, setEditMember] = useState<Member | null>(null);
 
   useEffect(() => {
     refetchMembers();
@@ -88,7 +89,7 @@ export default function Mitglieder() {
     try {
       await api.delete(`/members/${id}`);
       await refetchMembers();
-  
+
       toast.success("Mitglied erfolgreich gelöscht");
     } catch (error) {
       console.error("Fehler beim Löschen:", error);
@@ -97,7 +98,11 @@ export default function Mitglieder() {
   };
 
   const handleEdit = (id: number) => {
-    console.log("Edit member with id:", id);
+    const member = members.find((m) => m.id === id);
+    if (member) {
+      setEditMember(member);
+      setShowModal(true);
+    }
   };
 
   const handleCreateMember = async (data: NewMember) => {
@@ -106,12 +111,12 @@ export default function Mitglieder() {
       is_active: data.is_active ? 1 : 0,
       is_service_required: data.is_service_required ? 1 : 0,
     };
-  
+
     try {
       await api.post("/members", payload);
       await refetchMembers();
       setShowModal(false);
-  
+
       toast.success("Mitglied erfolgreich erstellt");
     } catch (error) {
       console.error("Fehler beim Erstellen:", error);
@@ -125,6 +130,26 @@ export default function Mitglieder() {
       setMembers(res.data);
     } catch (error) {
       console.error("Fehler beim Abrufen der Mitglieder:", error);
+    }
+  };
+
+  const handleUpdateMember = async (data: Member) => {
+    try {
+      const payload = {
+        ...data,
+        is_active: data.is_active ? 1 : 0,
+        is_service_required: data.is_service_required ? 1 : 0,
+      };
+
+      await api.put(`/members/${data.id}`, payload);
+      await refetchMembers();
+
+      setEditMember(null);
+      setShowModal(false);
+      toast.success("Mitglied erfolgreich aktualisiert");
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren:", error);
+      toast.error("Fehler beim Bearbeiten des Mitglieds");
     }
   };
 
@@ -183,7 +208,13 @@ export default function Mitglieder() {
           onChange={(e) => setGlobalFilter(e.target.value)}
           className="w-64"
         />
-        <Dialog open={showModal} onOpenChange={setShowModal}>
+        <Dialog
+          open={showModal || !!editMember}
+          onOpenChange={(open) => {
+            setShowModal(open);
+            if (!open) setEditMember(null); // Reset edit mode
+          }}
+        >
           <DialogTrigger asChild>
             <Button variant="default" size="sm">
               <UserPlus className="mr-2 h-4 w-4" /> Mitglied hinzufügen
@@ -191,12 +222,26 @@ export default function Mitglieder() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Neues Mitglied hinzufügen</DialogTitle>
+              <DialogTitle>
+                {editMember
+                  ? "Mitglied bearbeiten"
+                  : "Neues Mitglied hinzufügen"}
+              </DialogTitle>
             </DialogHeader>
             <MemberForm
-              onSave={handleCreateMember}
+              onSave={(data) => {
+                if ("id" in data) {
+                  return handleUpdateMember(data);
+                } else {
+                  return handleCreateMember(data);
+                }
+              }}
               memberStates={memberStates}
-              onClose={() => setShowModal(false)}
+              onClose={() => {
+                setShowModal(false);
+                setEditMember(null);
+              }}
+              initialData={editMember || undefined}
             />
           </DialogContent>
         </Dialog>
