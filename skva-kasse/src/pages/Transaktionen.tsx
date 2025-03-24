@@ -33,6 +33,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Transaction {
   id: number;
@@ -87,6 +88,9 @@ export default function Transaktionen() {
 
   const fetchItems = async (transactionId: number) => {
     if (!itemsMap[transactionId]) {
+      // künstlicher Delay für Skeleton
+      //await new Promise((resolve) => setTimeout(resolve, 800));
+
       const res = await api.get(
         `/transaction-items/by-transaction/${transactionId}`
       );
@@ -468,11 +472,12 @@ export default function Transaktionen() {
                               ))}
                               {!itemsMap[row.original.id] && (
                                 <tr>
-                                  <td
-                                    colSpan={5}
-                                    className="py-2 italic text-muted-foreground"
-                                  >
-                                    Lade...
+                                  <td colSpan={5} className="py-2">
+                                    <div className="space-y-2">
+                                      <Skeleton className="h-4 w-full bg-slate-300" />
+                                      <Skeleton className="h-4 w-full bg-slate-300" />
+                                      <Skeleton className="h-4 w-full bg-slate-300" />
+                                    </div>
                                   </td>
                                 </tr>
                               )}
