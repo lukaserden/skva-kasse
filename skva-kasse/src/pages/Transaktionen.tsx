@@ -34,6 +34,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import DelayedSkeleton from "@/components/DelayedSkeleton";
 
 interface Transaction {
   id: number;
@@ -89,7 +90,7 @@ export default function Transaktionen() {
   const fetchItems = async (transactionId: number) => {
     if (!itemsMap[transactionId]) {
       // künstlicher Delay für Skeleton
-      //await new Promise((resolve) => setTimeout(resolve, 800));
+      //await new Promise((resolve) => setTimeout(resolve, 1120));
 
       const res = await api.get(
         `/transaction-items/by-transaction/${transactionId}`
@@ -471,15 +472,17 @@ export default function Transaktionen() {
                                 </tr>
                               ))}
                               {!itemsMap[row.original.id] && (
-                                <tr>
-                                  <td colSpan={5} className="py-2">
-                                    <div className="space-y-2">
-                                      <Skeleton className="h-4 w-full bg-slate-300" />
-                                      <Skeleton className="h-4 w-full bg-slate-300" />
-                                      <Skeleton className="h-4 w-full bg-slate-300" />
-                                    </div>
-                                  </td>
-                                </tr>
+                                <DelayedSkeleton delay={150}>
+                                  <tr>
+                                    <td colSpan={5} className="py-2">
+                                      <div className="space-y-2">
+                                        <Skeleton className="h-4 w-full bg-slate-300" />
+                                        <Skeleton className="h-4 w-full bg-slate-300" />
+                                        <Skeleton className="h-4 w-full bg-slate-300" />
+                                      </div>
+                                    </td>
+                                  </tr>
+                                </DelayedSkeleton>
                               )}
                             </tbody>
                           </table>
@@ -522,17 +525,21 @@ export default function Transaktionen() {
         </span>
         <div className="flex items-center gap-2">
           <span>Zeilen pro Seite:</span>
-          <select
-            className="border rounded px-2 py-1"
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
+          <Select
+            value={table.getState().pagination.pageSize.toString()}
+            onValueChange={(value) => table.setPageSize(Number(value))}
           >
-            {[5, 10, 20, 50].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder="Zeilen" />
+            </SelectTrigger>
+            <SelectContent>
+              {[5, 10, 20, 50].map((size) => (
+                <SelectItem key={size} value={size.toString()}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Button
           variant="outline"
