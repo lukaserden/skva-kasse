@@ -1,28 +1,35 @@
 import React, { useEffect, useState } from "react";
 import api from "../api";
-import DataTable, { TableColumn } from "react-data-table-component";
-
 import {
-  UserPlus,
-  SquarePen,
-  Trash2
-} from "lucide-react";
-
-import "../styles/Mitglieder.css";
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { SquarePen, Trash2, UserPlus } from "lucide-react";
 
 interface Member {
   id: number;
   first_name: string;
   last_name: string;
-  birthdate: string;
-  email?: string;
-  phone?: string;
   membership_number: string;
   member_state_id: number;
-  discount: number;
-  is_active: number;
-  is_service_required: number;
-  created_at: string;
 }
 
 interface MemberState {
@@ -30,273 +37,167 @@ interface MemberState {
   name: string;
 }
 
-const Mitglieder: React.FC = () => {
-  const [records, setRecords] = useState<Member[]>([]);
-  const [allRecords, setAllRecords] = useState<Member[]>([]);
+export default function Mitglieder() {
+  const [members, setMembers] = useState<Member[]>([]);
   const [memberStates, setMemberStates] = useState<MemberState[]>([]);
-  const [newMember, setNewMember] = useState<Partial<Member>>({
-    first_name: "",
-    last_name: "",
-    birthdate: "",
-    membership_number: "",
-    member_state_id: 1,
-  });
-  const [showModal, setShowModal] = useState(false);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const response = await api.get("/members");
-        setRecords(response.data);
-        setAllRecords(response.data);
-      } catch (error) {
-        console.error("Fehler beim Laden der Mitglieder:", error);
-      }
-    };
-
-    const fetchStates = async () => {
-      try {
-        const response = await api.get("/member-states");
-        setMemberStates(response.data);
-      } catch (error) {
-        console.error("Fehler beim Laden der Mitgliedsstatus:", error);
-      }
-    };
-
-    fetchMembers();
-    fetchStates();
+    api.get("/members").then((res) => setMembers(res.data));
+    api.get("/member-states").then((res) => setMemberStates(res.data));
   }, []);
 
-  const handleNewMemberChange = (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = event.target;
-    setNewMember((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddMember = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    try {
-      const response = await api.post("/members", newMember);
-      const createdId = response.data.member_id;
-      setRecords((prev) => [...prev, { ...newMember, id: createdId } as Member]);
-      setAllRecords((prev) => [...prev, { ...newMember, id: createdId } as Member]);
-      setNewMember({
-        first_name: "",
-        last_name: "",
-        birthdate: "",
-        membership_number: "",
-        member_state_id: 1,
-      });
-      setShowModal(false);
-    } catch (error) {
-      console.error("Fehler beim Erstellen des Mitglieds:", error);
+  const getBadgeVariant = (state: string) => {
+    switch (state.toLowerCase()) {
+      case "aktiv":
+        return "default";
+      case "passiv":
+        return "secondary";
+      case "ehrenmitglied":
+        return "outline";
+      case "gesperrt":
+        return "destructive";
+      case "inaktiv":
+        return "ghost";
+      default:
+        return "secondary";
     }
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      await api.delete(`/members/${id}`);
-      setRecords((prev) => prev.filter((m) => m.id !== id));
-      setAllRecords((prev) => prev.filter((m) => m.id !== id));
-    } catch (error) {
-      console.error("Fehler beim Löschen des Mitglieds:", error);
-    }
-  };
-
-  const handleEdit = (id: number) => {
-    console.log("Edit action for row with id:", id);
-  };
-
-  const columns: TableColumn<Member>[] = [
+  const columns: ColumnDef<Member>[] = [
     {
-      name: "Aktionen",
-      cell: (row) => (
-        <div className="action-buttons">
-          <button onClick={() => handleEdit(row.id)} title="Bearbeiten">
-            <SquarePen fontSize="small" className="edit-icon" />
-          </button>
-          <button onClick={() => handleDelete(row.id)} title="Löschen">
-            <Trash2 fontSize="small" className="delete-icon" />
-          </button>
+      accessorKey: "membership_number",
+      header: "Mitgliedsnummer",
+    },
+    {
+      accessorFn: (row) => `${row.first_name} ${row.last_name}`,
+      id: "name",
+      header: "Name",
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const member = row.original;
+        const state = memberStates.find((s) => s.id === member.member_state_id);
+        const label = state?.name ?? "unbekannt";
+        return <Badge variant={getBadgeVariant(label)}>{label}</Badge>;
+      },
+    },
+    {
+      id: "actions",
+      header: "Aktionen",
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon">
+            <SquarePen className="w-4 h-4" />
+          </Button>
+          <Button variant="destructive" size="icon">
+            <Trash2 className="w-4 h-4" />
+          </Button>
         </div>
       ),
     },
-    {
-      name: "Mitgliedsnummer",
-      selector: (row) => row.membership_number,
-      sortable: true,
-    },
-    {
-      name: "Name",
-      selector: (row) => `${row.first_name} ${row.last_name}`,
-      sortable: true,
-    },
-    {
-      name: "Status",
-      cell: (row) => {
-        const state = memberStates.find((s) => s.id === row.member_state_id);
-        const label = state?.name ?? "unbekannt";
-        const statusColors: Record<string, string> = {
-          aktiv: "green",
-          passiv: "gray",
-          ehrenmitglied: "purple",
-          gesperrt: "red",
-          inaktiv: "orange",
-        };
-        const color = statusColors[label.toLowerCase()] || "black";
-
-        return (
-          <span
-            style={{
-              backgroundColor: color,
-              color: "white",
-              padding: "2px 8px",
-              borderRadius: "12px",
-              fontSize: "12px",
-              fontWeight: "bold",
-            }}
-          >
-            {label}
-          </span>
-        );
-      },
-    },
   ];
 
-  const customStyles = {
-    headCells: {
-      style: {
-        fontSize: "16px",
-        fontWeight: "bold",
-        color: "white",
-        backgroundColor: "black",
-      },
-    },
-    rows: {
-      style: {
-        fontSize: "14px",
-        color: "black",
-        backgroundColor: "lightgrey",
-      },
-    },
-  };
+  const table = useReactTable({
+    data: members,
+    columns,
+    state: { sorting, globalFilter },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
 
   return (
-    <div className="mitglieder-container">
-      <h1>Mitglieder</h1>
-      <p>Verwaltung der Mitglieder.</p>
-
-      <div className="search">
-        <p>Mitglieder durchsuchen</p>
-        <input
-          type="text"
-          placeholder="Suche Mitglied"
-          onChange={(e) => {
-            const search = e.target.value.toLowerCase();
-            const filtered = allRecords.filter((m) =>
-              `${m.first_name} ${m.last_name}`.toLowerCase().includes(search)
-            );
-            setRecords(filtered);
-          }}
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">Mitglieder</h1>
+      <div className="flex justify-between items-center gap-4 flex-wrap">
+        <Input
+          placeholder="Suchen..."
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          className="w-64"
         />
-        <button type="button" onClick={() => setShowModal(true)}>
-          <div className="btn">
-            <UserPlus size={24} />
-            <span>Mitglied hinzufügen</span>
-          </div>
-        </button>
+        <Button variant="default" size="sm">
+          <UserPlus className="mr-2 h-4 w-4" /> Mitglied hinzufügen
+        </Button>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={records}
-        customStyles={customStyles}
-        pagination
-        noDataComponent="Keine Daten gefunden"
-        paginationPerPage={10}
-        paginationRowsPerPageOptions={[10, 25, 50, 100]}
-        paginationComponentOptions={{
-          rowsPerPageText: "Zeilen pro Seite",
-          rangeSeparatorText: "von",
-          selectAllRowsItem: true,
-          selectAllRowsItemText: "Alle",
-        }}
-        selectableRowsHighlight
-        onSelectedRowsChange={(selected) => {
-          console.log("Ausgewählte Zeilen:", selected.selectedRows);
-        }}
-      />
-
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2>Neues Mitglied hinzufügen</h2>
-            <form onSubmit={handleAddMember}>
-              <input
-                title="Vorname"
-                type="text"
-                placeholder="Vorname"
-                name="first_name"
-                value={newMember.first_name || ""}
-                onChange={handleNewMemberChange}
-                required
-              />
-              <input
-                title="Nachname"
-                type="text"
-                placeholder="Nachname"
-                name="last_name"
-                value={newMember.last_name || ""}
-                onChange={handleNewMemberChange}
-                required
-              />
-              <input
-                title="Geburtsdatum"
-                type="date"
-                name="birthdate"
-                value={newMember.birthdate || ""}
-                onChange={handleNewMemberChange}
-                required
-              />
-              <input
-                title="Mitglieder Nummer"
-                type="text"
-                placeholder="Mitgliedsnummer"
-                name="membership_number"
-                value={newMember.membership_number || ""}
-                onChange={handleNewMemberChange}
-                required
-              />
-              <select
-                title="Mitgliedsstatus"
-                name="member_state_id"
-                value={newMember.member_state_id}
-                onChange={handleNewMemberChange}
-                required
-              >
-                {memberStates.map((state) => (
-                  <option key={state.id} value={state.id}>
-                    {state.name}
-                  </option>
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="cursor-pointer select-none"
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
                 ))}
-              </select>
-              <div className="modal-buttons">
-                <button className="submit" type="submit">
-                  Hinzufügen
-                </button>
-                <button
-                  className="cancel"
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                >
-                  Abbrechen
-                </button>
-              </div>
-            </form>
-          </div>
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex items-center justify-between mt-4 gap-4 flex-wrap">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Zurück
+        </Button>
+        <span>
+          Seite {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} von {table.getPageCount()}
+        </span>
+        <div className="flex items-center gap-2">
+          <span>Zeilen pro Seite:</span>
+          <Select
+            value={table.getState().pagination.pageSize.toString()}
+            onValueChange={(value) => table.setPageSize(Number(value))}
+          >
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder="Zeilen" />
+            </SelectTrigger>
+            <SelectContent>
+              {[5, 10, 20, 50].map((size) => (
+                <SelectItem key={size} value={size.toString()}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Weiter
+        </Button>
+      </div>
     </div>
   );
-};
-
-export default Mitglieder;
+}
