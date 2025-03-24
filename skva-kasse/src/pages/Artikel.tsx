@@ -176,6 +176,12 @@ export default function ArtikelListe() {
         className="w-64"
       />
 
+      <div className="flex justify-between items-center mt-2">
+        <p className="text-sm text-muted-foreground">
+          Gesamt: {totalCount} Artikel
+        </p>
+      </div>
+
       <div className="border rounded-md">
         <Table>
           <TableHeader>

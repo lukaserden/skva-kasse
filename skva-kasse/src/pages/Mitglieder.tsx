@@ -263,6 +263,12 @@ export default function Mitglieder() {
         </Dialog>
       </div>
 
+      <div className="flex justify-between items-center mt-2">
+        <p className="text-sm text-muted-foreground">
+          Gesamt: {totalCount} Mitglieder
+        </p>
+      </div>
+
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -355,9 +361,9 @@ export default function Mitglieder() {
                 <SelectValue placeholder="Zeilen" />
               </SelectTrigger>
               <SelectContent>
-                {[5, 10, 20, 50].map((size) => (
+                {[5, 10, 20, 50, totalCount].map((size) => (
                   <SelectItem key={size} value={size.toString()}>
-                    {size}
+                    {size === totalCount ? "Alle" : size}
                   </SelectItem>
                 ))}
               </SelectContent>
