@@ -7,25 +7,40 @@ const router = Router();
 router.get("/", async (req: Request, res: Response) => {
   try {
     const db = await dbPromise;
-    const { from, to } = req.query;
+    const { from, to, status } = req.query;
 
-    let query = `
+    const conditions: string[] = [];
+    const params: any[] = [];
+
+    if (from) {
+      conditions.push("DATE(t.timestamp) >= DATE(?)");
+      params.push(from);
+    }
+
+    if (to) {
+      conditions.push("DATE(t.timestamp) <= DATE(?)");
+      params.push(to);
+    }
+
+    if (status) {
+      conditions.push("t.status = ?");
+      params.push(status);
+    }
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+    const query = `
       SELECT t.*, 
              m.first_name || ' ' || m.last_name AS member_name,
              c.first_name || ' ' || c.last_name AS cashier_name
       FROM transactions t
       LEFT JOIN members m ON t.member_id = m.id
       LEFT JOIN members c ON t.cashier_id = c.id
+      ${whereClause}
+      ORDER BY t.timestamp DESC
     `;
-
-    const params: any[] = [];
-
-    if (from && to) {
-      query += ` WHERE DATE(t.timestamp) BETWEEN DATE(?) AND DATE(?)`;
-      params.push(from, to);
-    }
-
-    query += ` ORDER BY t.timestamp DESC`;
 
     const transactions = await db.all(query, params);
     res.json(transactions);

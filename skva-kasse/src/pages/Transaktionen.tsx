@@ -26,6 +26,7 @@ import { ArrowDown, ArrowUp, FileDown } from "lucide-react";
 import api from "@/api";
 
 import DateRangeFilter from "@/components/DateRangeFilter";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 interface Transaction {
   id: number;
@@ -60,18 +61,23 @@ export default function Transaktionen() {
     to: Date | undefined;
   }>({ from: undefined, to: undefined });
 
+  const [statusFilter, setStatusFilter] = useState("");
+
   useEffect(() => {
     const fetchTransactions = async () => {
       const params: Record<string, string> = {};
       if (dateRange.from) params.from = dateRange.from.toISOString();
       if (dateRange.to) params.to = dateRange.to.toISOString();
-
+      if (statusFilter && statusFilter !== "all") {
+        params.status = statusFilter;
+      }
+  
       const res = await api.get("/transactions", { params });
       setTransactions(res.data);
     };
-
+  
     fetchTransactions();
-  }, [dateRange]);
+  }, [dateRange, statusFilter]);
 
   const fetchItems = async (transactionId: number) => {
     if (!itemsMap[transactionId]) {
@@ -265,6 +271,21 @@ export default function Transaktionen() {
         <div className="flex items-center gap-2">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
         </div>
+
+        <Select
+  onValueChange={(value) => setStatusFilter(value)}
+  value={statusFilter}
+>
+  <SelectTrigger className="w-[160px]">
+    <SelectValue placeholder="Status filtern" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="all">Alle</SelectItem>
+    <SelectItem value="open">Offen</SelectItem>
+    <SelectItem value="paid">Bezahlt</SelectItem>
+    <SelectItem value="canceled">Storniert</SelectItem>
+  </SelectContent>
+</Select>
 
         <Button variant="outline" size="sm" onClick={() => exportCSV()}>
           <FileDown />
