@@ -1,10 +1,34 @@
-import React, { useState, useEffect } from "react";
-import DataTable, { TableColumn } from "react-data-table-component";
+import { useEffect, useState, useCallback } from "react";
 import api from "@/api";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Interface für Artikel-Daten aus der API
 interface Artikel {
   id: number;
   name: string;
@@ -18,179 +42,200 @@ interface Artikel {
   updated_at: string;
 }
 
-const ArtikelListe: React.FC = () => {
+export default function ArtikelListe() {
   const [artikel, setArtikel] = useState<Artikel[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState<string>("");
+  const [totalCount, setTotalCount] = useState(0);
+  const [search, setSearch] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
+  const fetchArtikel = useCallback(async () => {
+    const params: Record<string, string> = {
+      limit: pageSize.toString(),
+      offset: (pageIndex * pageSize).toString(),
+    };
 
-  // Daten von der API abrufen
+    if (search) {
+      params.search = search;
+    }
+
+    const res = await api.get("/products", { params });
+    setArtikel(res.data.data);
+    setTotalCount(res.data.total);
+  }, [pageIndex, pageSize, search]);
+
   useEffect(() => {
-    api
-      .get("/products")
-      .then((response) => {
-        setArtikel(response.data);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error.message);
-        setLoading(false);
-      });
-  }, []);
+    fetchArtikel();
+  }, [fetchArtikel]);
 
-  // 🔍 Suchfunktion
-  const filteredArtikel = artikel.filter((art) =>
-    art.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  // 🔄 Edit-Funktion
-  const handleEdit = (id: number) => {
-    console.log("Edit action for row with id:", id);
-    // Hier könnte ein Modal für die Bearbeitung geöffnet werden
-  };
-
-  // 🗑️ Delete-Funktion
-  const handleDelete = (id: number) => {
-    console.log("Delete action for row with id:", id);
-    // Hier könnte eine API-Anfrage für das Löschen erfolgen
-  };
-
-  // Funktion zur Formatierung von Datum und Uhrzeit
-  const formatDateTime = (dateString: string) => {
-    return new Intl.DateTimeFormat("de-CH", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(dateString));
-  };
-
-  // Spalten-Definition für die DataTable
-  const columns: TableColumn<Artikel>[] = [
+  const columns: ColumnDef<Artikel>[] = [
     {
-      name: "Aktionen",
-      cell: (row) => (
-        <div className="action-buttons">
-          <button onClick={() => handleEdit(row.id)} title="Eintrag bearbeiten">
-            <EditIcon fontSize="small" className="edit-icon" />
-          </button>
-          <button onClick={() => handleDelete(row.id)} title="Eintrag löschen">
-            <DeleteIcon fontSize="small" className="delete-icon" />
-          </button>
-        </div>
-      ),
-      width: "80px",
+      accessorKey: "name",
+      header: "Name",
     },
     {
-      name: "Name",
-      selector: (row) => row.name,
-      sortable: true,
+      accessorKey: "description",
+      header: "Beschreibung",
+      cell: ({ getValue }) => getValue() || "Keine Beschreibung",
     },
     {
-      name: "Beschreibung",
-      selector: (row) => row.description || "Keine Beschreibung",
-      sortable: false,
-    },
-    {
-      name: "Preis (CHF)",
-      selector: (row) =>
-        new Intl.NumberFormat("de-CH", {
+      accessorKey: "price",
+      header: "Preis (CHF)",
+      cell: ({ getValue }) =>
+        (Number(getValue()) / 100).toLocaleString("de-CH", {
           style: "currency",
           currency: "CHF",
-        }).format(row.price / 100),
-      sortable: true,
-      width: "100px",
+        }),
     },
     {
-      name: "Einheit",
-      selector: (row) => row.unit,
-      sortable: true,
-      width: "80px",
+      accessorKey: "unit",
+      header: "Einheit",
     },
     {
-      name: "Kategorie ID",
-      selector: (row) => row.category_id,
-      sortable: true,
-      width: "90px",
+      accessorKey: "category_id",
+      header: "Kategorie ID",
     },
     {
-      name: "Erstellt am",
-      selector: (row) => formatDateTime(row.created_at),
-      sortable: true,
-      width: "180px",
+      accessorKey: "created_at",
+      header: "Erstellt am",
+      cell: ({ getValue }) =>
+        new Intl.DateTimeFormat("de-CH", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(new Date(getValue() as string)),
     },
     {
-      name: "Aktiv",
-      selector: (row) => (row.is_active ? "Ja" : "Nein"),
-      sortable: true,
-      width: "80px",
+      accessorKey: "is_active",
+      header: "Aktiv",
+      cell: ({ getValue }) => (getValue() ? "Ja" : "Nein"),
     },
   ];
 
-  const customStyles = {
-    headCells: {
-      style: {
-        overflow: "hidden",
-        whiteSpace: "nowrap",
-        fontSize: "16px",
-        fontWeight: "bold",
-        color: "white",
-        backgroundColor: "black",
+  const table = useReactTable({
+    data: artikel,
+    columns,
+    state: {
+      sorting,
+      pagination: {
+        pageIndex,
+        pageSize,
       },
     },
-    rows: {
-      style: {
-        fontSize: "14px",
-        color: "black",
-        backgroundColor: "lightgrey",
-      },
+    onSortingChange: setSorting,
+    onPaginationChange: (updater) => {
+      const next = typeof updater === "function" ? updater({ pageIndex, pageSize }) : updater;
+      setPageIndex(next.pageIndex);
+      setPageSize(next.pageSize);
     },
-  };
-
-  if (loading) return <p>Lade Artikel...</p>;
-  if (error) return <p>Fehler: {error}</p>;
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: Math.ceil(totalCount / pageSize),
+  });
 
   return (
-    <div className="artikel-container">
-      <h1>Artikel</h1>
-      <p>Verwaltung der Artikel und Produkte.</p>
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">Artikel</h1>
+      <p className="text-muted-foreground">Verwaltung der Artikel und Produkte.</p>
 
-      {/* 🔍 Suchfeld */}
-      <div className="search">
-        <p>Artikel durchsuchen</p>
-        <input
-          type="text"
-          placeholder="Suche nach Artikelname"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <Input
+        placeholder="Artikel suchen..."
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPageIndex(0);
+        }}
+        className="w-64"
+      />
+
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="cursor-pointer select-none"
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {{
+                      asc: <ArrowUp className="inline-block ml-1 h-3 w-3" />,
+                      desc: <ArrowDown className="inline-block ml-1 h-3 w-3" />,
+                    }[header.column.getIsSorted() as string] ?? null}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
-      {/* DataTable */}
-      <DataTable
-        columns={columns}
-        data={filteredArtikel}
-        customStyles={customStyles}
-        pagination
-        responsive
-        noDataComponent="Keine Daten gefunden"
-        paginationPerPage={10}
-        paginationRowsPerPageOptions={[10, 25, 50, 100]}
-        paginationComponentOptions={{
-          rowsPerPageText: "Zeilen pro Seite",
-          rangeSeparatorText: "von",
-          selectAllRowsItem: true,
-          selectAllRowsItemText: "Alle",
-        }}
-        selectableRowsHighlight
-        onSelectedRowsChange={(selected) => {
-          console.log("Ausgewählte Zeilen:", selected.selectedRows);
-        }}
-      />
+      <div className="grid grid-cols-3 items-center mt-4 gap-4">
+        <div className="flex justify-start">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            <ArrowLeft className="mr-1 h-4 w-4" /> Zurück
+          </Button>
+        </div>
+
+        <div className="flex flex-col items-center text-sm">
+          <span>
+            Seite {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} von {table.getPageCount()}
+          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <span>Zeilen pro Seite:</span>
+            <Select
+              value={table.getState().pagination.pageSize.toString()}
+              onValueChange={(value) => table.setPageSize(Number(value))}
+            >
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Zeilen" />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 20, 50, 100].map((size) => (
+                  <SelectItem key={size} value={size.toString()}>
+                    {size === 100 ? "Alle" : size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Weiter <ArrowRight className="ml-1 h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default ArtikelListe;
+}

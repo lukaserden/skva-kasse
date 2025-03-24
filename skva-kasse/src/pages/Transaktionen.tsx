@@ -64,6 +64,7 @@ interface TransactionItem {
 
 export default function Transaktionen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [expanded, setExpanded] = useState({});
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -74,24 +75,30 @@ export default function Transaktionen() {
     from: Date | undefined;
     to: Date | undefined;
   }>({ from: undefined, to: undefined });
-
   const [statusFilter, setStatusFilter] = useState("");
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      const params: Record<string, string> = {};
-      if (dateRange.from) params.from = dateRange.from.toISOString();
-      if (dateRange.to) params.to = dateRange.to.toISOString();
-      if (statusFilter && statusFilter !== "all") {
-        params.status = statusFilter;
-      }
+  // 💡 Pagination-Zustände aus Table
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
 
-      const res = await api.get("/transactions", { params });
-      setTransactions(res.data);
+  const fetchTransactions = React.useCallback(async () => {
+    const params: Record<string, string> = {
+      limit: pageSize.toString(),
+      offset: (pageIndex * pageSize).toString(),
     };
 
+    if (dateRange.from) params.from = dateRange.from.toISOString();
+    if (dateRange.to) params.to = dateRange.to.toISOString();
+    if (statusFilter && statusFilter !== "all") params.status = statusFilter;
+
+    const res = await api.get("/transactions", { params });
+    setTransactions(res.data.data);
+    setTotalCount(res.data.total);
+  }, [dateRange, statusFilter, pageIndex, pageSize]);
+
+  useEffect(() => {
     fetchTransactions();
-  }, [dateRange, statusFilter]);
+  }, [fetchTransactions]);
 
   const fetchItems = async (transactionId: number) => {
     if (!itemsMap[transactionId]) {
@@ -194,15 +201,29 @@ export default function Transaktionen() {
       sorting,
       globalFilter,
       expanded,
+      pagination: {
+        pageIndex,
+        pageSize,
+      },
     },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onExpandedChange: setExpanded,
+    onPaginationChange: (updater) => {
+      const next =
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize })
+          : updater;
+      setPageIndex(next.pageIndex);
+      setPageSize(next.pageSize);
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
+    manualPagination: true,
+    pageCount: Math.ceil(totalCount / pageSize),
   });
 
   function getBadgeVariant(
@@ -407,6 +428,12 @@ export default function Transaktionen() {
         </div>
       </div>
 
+      <div className="flex justify-between items-center mt-2">
+        <p className="text-sm text-muted-foreground">
+          Gesamt: {totalCount} Transaktionen
+        </p>
+      </div>
+
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -554,9 +581,9 @@ export default function Transaktionen() {
                 <SelectValue placeholder="Zeilen" />
               </SelectTrigger>
               <SelectContent>
-                {[5, 10, 20, 50].map((size) => (
+                {[5, 10, 20, 50, totalCount].map((size) => (
                   <SelectItem key={size} value={size.toString()}>
-                    {size}
+                    {size === totalCount ? "Alle" : size}
                   </SelectItem>
                 ))}
               </SelectContent>

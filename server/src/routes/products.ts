@@ -7,8 +7,47 @@ const router = Router();
 router.get("/", async (req: Request, res: Response) => {
   try {
     const db = await dbPromise;
-    const products = await db.all("SELECT * FROM products");
-    res.json(products);
+
+    const {
+      search,
+      is_active,
+      category_id,
+      limit = 50,
+      offset = 0,
+    } = req.query;
+    const params: any[] = [];
+    let whereClauses: string[] = [];
+
+    if (search) {
+      whereClauses.push("LOWER(name) LIKE ?");
+      params.push(`%${(search as string).toLowerCase()}%`);
+    }
+
+    if (is_active !== undefined) {
+      whereClauses.push("is_active = ?");
+      params.push(Number(is_active));
+    }
+
+    if (category_id) {
+      whereClauses.push("category_id = ?");
+      params.push(Number(category_id));
+    }
+
+    const whereSQL = whereClauses.length
+      ? `WHERE ${whereClauses.join(" AND ")}`
+      : "";
+
+    const products = await db.all(
+      `SELECT * FROM products ${whereSQL} ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
+      [...params, Number(limit), Number(offset)]
+    );
+
+    const total = await db.get(
+      `SELECT COUNT(*) as count FROM products ${whereSQL}`,
+      params
+    );
+
+    res.json({ data: products, total: total.count });
   } catch (error) {
     console.error("Fehler beim Abrufen der Produkte:", error);
     res.status(500).json({ error: "Fehler beim Abrufen der Produkte" });

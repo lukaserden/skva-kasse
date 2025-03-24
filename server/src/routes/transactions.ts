@@ -3,11 +3,11 @@ import dbPromise from "../db/database";
 
 const router = Router();
 
-/** GET: Alle Transaktionen abrufen */
+/** GET: Alle Transaktionen abrufen (mit Filter + Pagination) */
 router.get("/", async (req: Request, res: Response) => {
   try {
     const db = await dbPromise;
-    const { from, to, status } = req.query;
+    const { from, to, status, limit = 50, offset = 0 } = req.query;
 
     const conditions: string[] = [];
     const params: any[] = [];
@@ -31,7 +31,16 @@ router.get("/", async (req: Request, res: Response) => {
       ? `WHERE ${conditions.join(" AND ")}`
       : "";
 
-    const query = `
+    //  Gesamte Anzahl (für Pagination im Frontend)
+    const countQuery = `
+      SELECT COUNT(*) as count
+      FROM transactions t
+      ${whereClause}
+    `;
+    const total = await db.get(countQuery, params);
+
+    //  Gefilterte Transaktionen mit Join + Limit/Offset
+    const dataQuery = `
       SELECT t.*, 
              m.first_name || ' ' || m.last_name AS member_name,
              c.first_name || ' ' || c.last_name AS cashier_name
@@ -40,10 +49,15 @@ router.get("/", async (req: Request, res: Response) => {
       LEFT JOIN members c ON t.cashier_id = c.id
       ${whereClause}
       ORDER BY t.timestamp DESC
+      LIMIT ? OFFSET ?
     `;
+    const data = await db.all(dataQuery, [
+      ...params,
+      Number(limit),
+      Number(offset),
+    ]);
 
-    const transactions = await db.all(query, params);
-    res.json(transactions);
+    res.json({ data, total: total.count });
   } catch (error) {
     console.error("Fehler beim Abrufen der Transaktionen:", error);
     res.status(500).json({ error: "Fehler beim Abrufen der Transaktionen" });
