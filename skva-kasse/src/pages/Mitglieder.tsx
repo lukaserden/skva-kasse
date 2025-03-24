@@ -52,6 +52,7 @@ export default function Mitglieder() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [viewMember, setViewMember] = useState<Member | null>(null);
 
   useEffect(() => {
     api.get("/members").then((res) => setMembers(res.data));
@@ -72,6 +73,13 @@ export default function Mitglieder() {
         return "ghost";
       default:
         return "secondary";
+    }
+  };
+
+  const handleView = (id: number) => {
+    const member = members.find((m) => m.id === id);
+    if (member) {
+      setViewMember(member);
     }
   };
 
@@ -133,6 +141,7 @@ export default function Mitglieder() {
       header: "Aktionen",
       cell: ({ row }) => (
         <MemberActionMenu
+          onView={() => handleView(row.original.id)}
           onEdit={() => handleEdit(row.original.id)}
           onDelete={() => handleDelete(row.original.id)}
         />
@@ -258,6 +267,52 @@ export default function Mitglieder() {
           Weiter
         </Button>
       </div>
+      <Dialog open={!!viewMember} onOpenChange={() => setViewMember(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mitglied anzeigen</DialogTitle>
+          </DialogHeader>
+          {viewMember && (
+            <div className="space-y-2 text-sm">
+              <p>
+                <strong>Name:</strong> {viewMember.first_name}{" "}
+                {viewMember.last_name}
+              </p>
+              <p>
+                <strong>Geburtsdatum:</strong> {viewMember.birthdate}
+              </p>
+              <p>
+                <strong>Email:</strong> {viewMember.email || "-"}
+              </p>
+              <p>
+                <strong>Telefon:</strong> {viewMember.phone || "-"}
+              </p>
+              <p>
+                <strong>Mitgliedsnummer:</strong> {viewMember.membership_number}
+              </p>
+              <p>
+                <strong>Status:</strong>{" "}
+                {memberStates.find((s) => s.id === viewMember.member_state_id)
+                  ?.name || "unbekannt"}
+              </p>
+              <p>
+                <strong>Rabatt:</strong> {viewMember.discount ?? 0}%
+              </p>
+              <p>
+                <strong>Aktiv:</strong> {viewMember.is_active ? "Ja" : "Nein"}
+              </p>
+              <p>
+                <strong>Dienstpflicht:</strong>{" "}
+                {viewMember.is_service_required ? "Ja" : "Nein"}
+              </p>
+              <p>
+                <strong>Erstellt am:</strong>{" "}
+                {new Date(viewMember.created_at).toLocaleDateString()}
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
