@@ -297,76 +297,87 @@ export default function Transaktionen() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <React.Fragment key={row.id}>
-                <TableRow>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-                {row.getIsExpanded() && (
+            {table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <React.Fragment key={row.id}>
                   <TableRow>
-                    <TableCell colSpan={columns.length}>
-                      <div className="p-4 bg-muted rounded-md">
-                        <h4 className="font-medium mb-2">Details</h4>
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="text-left text-muted-foreground">
-                              <th className="py-1 pr-4">Produkt</th>
-                              <th className="py-1 pr-4">Menge</th>
-                              <th className="py-1 pr-4">Preis (CHF)</th>
-                              <th className="py-1 pr-4">Subtotal (CHF)</th>
-                              <th className="py-1 pr-4">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(itemsMap[row.original.id] ?? []).map((item) => (
-                              <tr
-                                key={item.id}
-                                className="border-t border-muted"
-                              >
-                                <td className="py-1 pr-4">
-                                  {item.product_name}
-                                </td>
-                                <td className="py-1 pr-4">{item.quantity}</td>
-                                <td className="py-1 pr-4">
-                                  {(item.price / 100).toFixed(2)}
-                                </td>
-                                <td className="py-1 pr-4">
-                                  {(item.subtotal / 100).toFixed(2)}
-                                </td>
-                                <td className="py-1 pr-4">
-                                  <Badge
-                                    variant={getItemBadgeVariant(item.status)}
-                                  >
-                                    {translateItemStatus(item.status)}
-                                  </Badge>
-                                </td>
-                              </tr>
-                            ))}
-                            {!itemsMap[row.original.id] && (
-                              <tr>
-                                <td
-                                  colSpan={5}
-                                  className="py-2 italic text-muted-foreground"
-                                >
-                                  Lade...
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </TableCell>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                )}
-              </React.Fragment>
-            ))}
+                  {row.getIsExpanded() && (
+                    <TableRow>
+                      <TableCell colSpan={columns.length}>
+                        <div className="p-4 bg-muted rounded-md">
+                          <h4 className="font-medium mb-2">Details</h4>
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-muted-foreground">
+                                <th className="py-1 pr-4">Produkt</th>
+                                <th className="py-1 pr-4">Menge</th>
+                                <th className="py-1 pr-4">Preis (CHF)</th>
+                                <th className="py-1 pr-4">Subtotal (CHF)</th>
+                                <th className="py-1 pr-4">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(itemsMap[row.original.id] ?? []).map((item) => (
+                                <tr
+                                  key={item.id}
+                                  className="border-t border-muted"
+                                >
+                                  <td className="py-1 pr-4">
+                                    {item.product_name}
+                                  </td>
+                                  <td className="py-1 pr-4">{item.quantity}</td>
+                                  <td className="py-1 pr-4">
+                                    {(item.price / 100).toFixed(2)}
+                                  </td>
+                                  <td className="py-1 pr-4">
+                                    {(item.subtotal / 100).toFixed(2)}
+                                  </td>
+                                  <td className="py-1 pr-4">
+                                    <Badge
+                                      variant={getItemBadgeVariant(item.status)}
+                                    >
+                                      {translateItemStatus(item.status)}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                              {!itemsMap[row.original.id] && (
+                                <tr>
+                                  <td
+                                    colSpan={5}
+                                    className="py-2 italic text-muted-foreground"
+                                  >
+                                    Lade...
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center py-6"
+                >
+                  Keine Transaktionen gefunden im gewählten Zeitraum.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
@@ -382,8 +393,11 @@ export default function Transaktionen() {
           Zurück
         </Button>
         <span>
-          Seite {table.getState().pagination.pageIndex + 1} von{" "}
-          {table.getPageCount()}
+          Seite{" "}
+          {table.getPageCount() === 0
+            ? 0
+            : table.getState().pagination.pageIndex + 1}{" "}
+          von {table.getPageCount()}
         </span>
         <div className="flex items-center gap-2">
           <span>Zeilen pro Seite:</span>
