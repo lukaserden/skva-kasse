@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import MemberForm from "@/components/MemberForm";
 import { Member, NewMember } from "@/types";
+import { toast } from "sonner";
 
 interface MemberState {
   id: number;
@@ -87,8 +88,11 @@ export default function Mitglieder() {
     try {
       await api.delete(`/members/${id}`);
       await refetchMembers();
+  
+      toast.success("Mitglied erfolgreich gelöscht");
     } catch (error) {
       console.error("Fehler beim Löschen:", error);
+      toast.error("Fehler beim Löschen des Mitglieds");
     }
   };
 
@@ -102,13 +106,16 @@ export default function Mitglieder() {
       is_active: data.is_active ? 1 : 0,
       is_service_required: data.is_service_required ? 1 : 0,
     };
-
+  
     try {
       await api.post("/members", payload);
-      await refetchMembers(); // Liste aktualisieren
+      await refetchMembers();
       setShowModal(false);
+  
+      toast.success("Mitglied erfolgreich erstellt");
     } catch (error) {
-      console.error("Fehler beim Erstellen des Mitglieds:", error);
+      console.error("Fehler beim Erstellen:", error);
+      toast.error("Fehler beim Erstellen des Mitglieds");
     }
   };
 
