@@ -6,6 +6,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { CalendarSearch, X } from "lucide-react";
 
@@ -47,16 +48,23 @@ export default function DateRangeFilter({ value, onChange }: Props) {
         )}`
       : "Zeitraum wählen";
 
+  // Hilfsfunktion zur Validierung
+  const safeChange = (range: DateRange) => {
+    if (range.from && range.to && range.to < range.from) {
+      onChange({ from: range.from, to: undefined });
+    } else {
+      onChange(range);
+    }
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          className={cn(
-            "w-[280px] justify-start text-left font-normal relative pr-10"
-          )}
+          className={cn("w-[280px] text-left font-normal relative pr-10 pl-8")}
         >
-          <CalendarSearch className="mr-2 h-4 w-4" />
+          <CalendarSearch className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           {label}
           {(value.from || value.to) && (
             <button
@@ -73,6 +81,7 @@ export default function DateRangeFilter({ value, onChange }: Props) {
           )}
         </Button>
       </PopoverTrigger>
+
       <PopoverContent className="w-auto p-4 space-y-4">
         <div className="flex gap-2 flex-wrap">
           {presets.map((preset) => (
@@ -80,12 +89,37 @@ export default function DateRangeFilter({ value, onChange }: Props) {
               key={preset.label}
               variant="secondary"
               size="sm"
-              onClick={() => onChange(preset.range)}
+              onClick={() => safeChange(preset.range)}
             >
               {preset.label}
             </Button>
           ))}
         </div>
+
+        {/* Manuelle Eingabe */}
+        <div className="flex gap-2 items-center">
+          <Input
+            type="date"
+            value={value.from ? format(value.from, "yyyy-MM-dd") : ""}
+            onChange={(e) => {
+              const from = e.target.value
+                ? new Date(e.target.value)
+                : undefined;
+              safeChange({ from, to: value.to });
+            }}
+          />
+          <span className="text-muted-foreground">bis</span>
+          <Input
+            type="date"
+            value={value.to ? format(value.to, "yyyy-MM-dd") : ""}
+            onChange={(e) => {
+              const to = e.target.value ? new Date(e.target.value) : undefined;
+              safeChange({ from: value.from, to });
+            }}
+          />
+        </div>
+
+        {/* Kalender */}
         <Calendar
           mode="range"
           selected={{
@@ -93,11 +127,10 @@ export default function DateRangeFilter({ value, onChange }: Props) {
             to: value.to,
           }}
           onSelect={(range) => {
-            if (range?.from && range?.to) {
-              onChange({ from: range.from, to: range.to });
-            } else if (range?.from && !range?.to) {
-              onChange({ from: range.from, to: undefined });
-            }
+            safeChange({
+              from: range?.from,
+              to: range?.to ?? undefined,
+            });
           }}
           numberOfMonths={2}
         />
