@@ -21,7 +21,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Plus } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -29,19 +29,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Artikel {
-  id: number;
-  name: string;
-  description?: string;
-  price: number;
-  stock?: number | null;
-  unit: string;
-  category_id: number;
-  is_active: number;
-  created_at: string;
-  updated_at: string;
-}
+import { ArtikelActionMenu } from "@/components/ArticleActionMenu";
+import ArticleForm from "@/components/ArticleForm";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Artikel } from "@/types";
+import { toast } from "sonner"; // falls noch nicht importiert
 
 interface ArtikelResponse {
   data: Artikel[];
@@ -57,6 +55,41 @@ export default function ArtikelListe() {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [selectedArtikel, setSelectedArtikel] = useState<Artikel | null>(null);
+  const [showModal, setShowModal] = useState(false);
+
+  const handleView = (artikel: Artikel) => {
+    setSelectedArtikel(artikel);
+  };
+
+  const handleEdit = (artikel: Artikel) => {
+    setSelectedArtikel(artikel);
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await api.delete(`/products/${id}`);
+      await fetchArtikel();
+    } catch (error) {
+      console.error("Fehler beim Löschen:", error);
+    }
+  };
+
+  const handleSave = async (data: Partial<Artikel>) => {
+    try {
+      if (selectedArtikel) {
+        await api.put(`/products/${selectedArtikel.id}`, data);
+      } else {
+        await api.post("/products", data);
+      }
+      await fetchArtikel();
+      setShowModal(false);
+      setSelectedArtikel(null);
+    } catch (err) {
+      console.error("Fehler beim Speichern:", err);
+    }
+  };
 
   const fetchArtikel = useCallback(async () => {
     setLoading(true);
@@ -130,6 +163,17 @@ export default function ArtikelListe() {
       header: "Aktiv",
       cell: ({ getValue }) => (getValue() ? "Ja" : "Nein"),
     },
+    {
+      id: "actions",
+      header: () => "Aktionen",
+      cell: ({ row }) => (
+        <ArtikelActionMenu
+          onView={() => handleView(row.original)}
+          onEdit={() => handleEdit(row.original)}
+          onDelete={() => handleDelete(row.original.id)}
+        />
+      ),
+    },
   ];
 
   const table = useReactTable({
@@ -166,15 +210,27 @@ export default function ArtikelListe() {
         Verwaltung der Artikel und Produkte.
       </p>
 
-      <Input
-        placeholder="Artikel suchen..."
-        value={search}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPageIndex(0);
-        }}
-        className="w-64"
-      />
+      <div className="flex justify-between items-center gap-4 flex-wrap">
+        <Input
+          placeholder="Artikel suchen..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPageIndex(0);
+          }}
+          className="w-64"
+        />
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => {
+            setSelectedArtikel(null);
+            setShowModal(true);
+          }}
+        >
+          <Plus className="h-4 w-4 mr-2" /> Artikel hinzufügen
+        </Button>
+      </div>
 
       <div className="flex justify-between items-center mt-2">
         <p className="text-sm text-muted-foreground">
@@ -258,11 +314,7 @@ export default function ArtikelListe() {
 
         <div className="flex flex-col items-center text-sm">
           <span>
-            Seite{" "}
-            {table.getPageCount() === 0
-              ? 0
-              : table.getState().pagination.pageIndex + 1}{" "}
-            von {table.getPageCount()}
+            Seite {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} von {table.getPageCount()}
           </span>
           <div className="flex items-center gap-2 mt-1">
             <span>Zeilen pro Seite:</span>
@@ -295,6 +347,47 @@ export default function ArtikelListe() {
           </Button>
         </div>
       </div>
+
+      <Dialog
+  open={showModal}
+  onOpenChange={(open) => {
+    setShowModal(open);
+    if (!open) setSelectedArtikel(null);
+  }}
+>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>
+        {selectedArtikel ? "Artikel bearbeiten" : "Neuen Artikel hinzufügen"}
+      </DialogTitle>
+    </DialogHeader>
+
+    <ArticleForm
+      initialData={selectedArtikel || undefined}
+      onSave={async (data) => {
+        try {
+          if (selectedArtikel) {
+            await api.put(`/products/${selectedArtikel.id}`, data);
+            toast.success("Artikel erfolgreich aktualisiert");
+          } else {
+            await api.post("/products", data);
+            toast.success("Artikel erfolgreich erstellt");
+          }
+          await fetchArtikel();
+          setShowModal(false);
+          setSelectedArtikel(null);
+        } catch (error) {
+          console.error("Fehler beim Speichern:", error);
+          toast.error("Fehler beim Speichern des Artikels");
+        }
+      }}
+      onClose={() => {
+        setShowModal(false);
+        setSelectedArtikel(null);
+      }}
+    />
+  </DialogContent>
+</Dialog>
     </div>
   );
 }

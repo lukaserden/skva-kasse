@@ -27,3 +27,16 @@ export type NewMember = {
   is_active: boolean;
   is_service_required: boolean;
 };
+
+export interface Artikel {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  stock?: number | null;
+  unit: string;
+  category_id: number;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
