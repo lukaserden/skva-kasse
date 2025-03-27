@@ -14,12 +14,21 @@ import transactionItem from "./routes/transactionItems";
 
 import authMiddleware from "./middleware/authMiddleware";
 
+import cookieParser from "cookie-parser";
+
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3000;
+const CORS_ORIGIN = process.env.CORS_ORIGIN;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: CORS_ORIGIN, // deine Vite-App
+    credentials: true,
+  })
+);
+app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(express.json());
 

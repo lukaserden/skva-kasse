@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { loginUser } from "@/api"; // ⬅️ NEU
 
 export function LoginForm({
   className,
@@ -26,28 +27,20 @@ export function LoginForm({
     e.preventDefault();
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        }
-      );
+      const accessToken = await loginUser(username, password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Login fehlgeschlagen");
+      if (!accessToken) {
+        throw new Error("Kein Access Token erhalten.");
       }
 
-      // ✅ HIER: Token speichern
-      localStorage.setItem("token", data.token);
-
-      // ✅ Weiterleitung nach erfolgreichem Login
+      // Weiterleitung nach erfolgreichem Login
       navigate("/admin");
-    } catch (error: any) {
-      setErrorMsg(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        setErrorMsg(error.message);
+      } else {
+        setErrorMsg("Login fehlgeschlagen");
+      }
     }
   };
 
