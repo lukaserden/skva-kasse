@@ -137,12 +137,13 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
                       <div
                         className={`absolute top-0 left-0 w-full h-3 rounded-t-xl ${colorClass}`}
                       />
+                      {/* Artikelname */}
                       <span className="text-lg font-semibold">{item.name}</span>
                       <div className="flex justify-between w-full px-2 mt-1">
-                        <span className="text-md opacity-70">
+                        <span className="text-xs opacity-70">
                           CHF {(item.price / 100).toFixed(2)}
                         </span>
-                        <span className="text-md opacity-70">
+                        <span className="text-xs opacity-70">
                           {item.unit !== null ? `${item.unit}` : ""}
                         </span>
                       </div>
