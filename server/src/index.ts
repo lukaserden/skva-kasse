@@ -8,7 +8,7 @@ import categories from "./routes/categories";
 import members from "./routes/members";
 import memberStates from "./routes/memberStates";
 import transactions from "./routes/transactions";
-import authLogin from "./routes/authLogin";
+import authRoutes from "./routes/authRoutes";
 import initAdmin from "./routes/initAdmin";
 import transactionItem from "./routes/transactionItems";
 
@@ -33,7 +33,7 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 /* --------------------  Öffentliche Routen -------------------- */
-app.use("/auth", authLogin); // POST /auth/login
+app.use("/auth", authRoutes); // POST /auth/login
 app.use("/auth/", initAdmin); // POST /auth/init-admin
 
 /* --------------------  Geschützte Routen -------------------- */

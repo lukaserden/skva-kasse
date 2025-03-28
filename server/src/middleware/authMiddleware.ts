@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-
-
 interface AuthenticatedRequest extends Request {
   user?: {
     id: number;
@@ -17,12 +15,10 @@ const authMiddleware = (
   res: Response,
   next: NextFunction
 ): void => {
-  console.log("🪪 Authorization Header:", req.headers.authorization);
-  
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Kein Token übermittelt." });
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Nicht eingeloggt." });
     return;
   }
 
@@ -31,13 +27,11 @@ const authMiddleware = (
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
     req.user = decoded as AuthenticatedRequest["user"];
-
-    console.log("🔓 Authenticated User:", decoded);
-    
     next();
   } catch (error) {
     console.warn("❌ Token ungültig oder abgelaufen:", error);
     res.status(401).json({ error: "Token abgelaufen oder ungültig." });
+    return;
   }
 };
 

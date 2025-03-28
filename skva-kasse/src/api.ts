@@ -1,11 +1,12 @@
-// src/api.ts
 import axios from "axios";
+import { User } from "./types";
 
 // 🔧 Eigene Axios-Instanz
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
+    withCredentials: true, // ⬅️ wichtig für Cookies bei allen Anfragen
   },
   withCredentials: true, // ⬅️ wichtig für Cookies bei allen Anfragen
 });
@@ -96,6 +97,29 @@ export async function loginUser(username: string, password: string) {
     localStorage.setItem("token", accessToken);
   }
   return accessToken;
+}
+
+export async function logoutUser() {
+  try {
+    await api.post("/auth/logout"); // ruft das Backend auf
+  } catch (error) {
+    console.warn("⚠️ Logout-Fehler:", error);
+  } finally {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  }
+}
+
+export async function fetchCurrentUser(): Promise<User | null> {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return null; // ⬅️ Wenn kein Token: gar nicht erst Anfrage schicken
+
+    const response = await api.get("/auth/me");
+    return response.data;
+  } catch {
+    return null;
+  }
 }
 
 export default api;

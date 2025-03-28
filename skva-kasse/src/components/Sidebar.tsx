@@ -21,15 +21,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSidebar } from "../contexts/SidebarContext"; // ⬅️ Kontext importieren
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Sidebar() {
   const { collapsed, toggle } = useSidebar(); // ⬅️ globaler Zustand
   const navigate = useNavigate();
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
-  };
+  const { logout } = useAuth();
 
   const links = [
     { to: "/kasse", label: "Kasse", icon: Calculator },

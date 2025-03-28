@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dbPromise from "../db/database";
+import { AuthenticatedRequest } from "../middleware/authMiddleware";
+import authMiddleware from "../middleware/authMiddleware";
 
 const router = Router();
 
@@ -46,7 +48,7 @@ router.post("/login", async (req: Request, res: Response): Promise<any> => {
         role: user.role_name,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "1h" } // kurz
+      { expiresIn: "10s" } // kurz
     );
 
     // 2. Refresh Token (langlebig)
@@ -103,7 +105,7 @@ router.post("/refresh", (req: Request, res: Response): any => {
         role: (decoded as any).role,
       },
       process.env.JWT_SECRET!,
-      { expiresIn: "15m" }
+      { expiresIn: "1h" }
     );
 
     res.json({ success: true, accessToken });
@@ -113,5 +115,31 @@ router.post("/refresh", (req: Request, res: Response): any => {
       .json({ error: "Ungültiger oder abgelaufener Refresh Token." });
   }
 });
+
+/** POST /auth/logout */
+router.post("/logout", (_req: Request, res: Response) => {
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
+  });
+
+  res.json({ success: true, message: "Logout erfolgreich" });
+});
+
+/** GET /auth/me */
+router.get(
+  "/me",
+  authMiddleware,
+  (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      res.status(401).json({ error: "Nicht eingeloggt" });
+      return;
+    }
+
+    res.json(req.user); // ✅ kein return nötig
+  }
+);
 
 export default router;
