@@ -135,7 +135,7 @@ const Kasse: React.FC = () => {
     try {
       const response = await api.post("/transactions", payload);
   
-      console.log("Transaktion erfolgreich gespeichert:", response.data);
+      console.log("Transaktion erfolgreich gespeichert:", response.data.data);
   
       // 🧹 Reset
       setOrders([]);
@@ -157,7 +157,7 @@ const Kasse: React.FC = () => {
     const fetchMembers = async () => {
       try {
         const response = await api.get("/members");
-        setMembers(response.data);
+        setMembers(response.data.data);
       } catch (error) {
         console.error("Fehler beim Laden der Mitglieder:", error);
       }
