@@ -115,8 +115,8 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
       {/* Tabs Content */}
       {Object.values(mainCategories).map((tab) => (
         <TabsContent key={tab} value={tab} className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="grid grid-cols-4 gap-4 p-2">
+          <ScrollArea className="h-full"> 
+            <div className="grid grid-cols-4 gap-2 p-2">
               {groupedArticles[tab]?.length ? (
                 groupedArticles[tab].map((item) => {
                   const category = categories.find(

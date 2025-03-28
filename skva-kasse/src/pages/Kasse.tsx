@@ -5,6 +5,8 @@ import ArticleTabs from "../components/ArticleTabs";
 import DeleteIcon from "@mui/icons-material/Delete";
 import OpenOrdersModal from "../components/OpenOrdersModal";
 import api from "../api"; // Axios-Instanz
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // Artikel-Interface
 interface Artikel {
@@ -101,21 +103,21 @@ const Kasse: React.FC = () => {
       alert("Keine Bestellungen vorhanden");
       return;
     }
-  
+
     if (!selectedMemberId && !selectedTable) {
       alert("Bitte wähle ein Mitglied oder einen Tisch aus.");
       return;
     }
-  
+
     if (selectedMemberId && selectedTable) {
       alert("Es darf nur ein Tisch ODER ein Mitglied ausgewählt sein.");
       return;
     }
-  
+
     if (!window.confirm("Möchtest du die Bestellung wirklich abschließen?")) {
       return;
     }
-  
+
     // ✨ Transaktion vorbereiten
     const payload = {
       member_id: selectedMemberId ?? null,
@@ -131,12 +133,12 @@ const Kasse: React.FC = () => {
         price: Math.round(o.price * 100),
       })),
     };
-  
+
     try {
       const response = await api.post("/transactions", payload);
-  
+
       console.log("Transaktion erfolgreich gespeichert:", response.data.data);
-  
+
       // 🧹 Reset
       setOrders([]);
       setSelectedMemberId(null);
@@ -164,7 +166,7 @@ const Kasse: React.FC = () => {
         console.error("Fehler beim Laden der Mitglieder:", error);
       }
     };
-  
+
     fetchMembers();
   }, []);
 
@@ -206,103 +208,98 @@ const Kasse: React.FC = () => {
       </nav>
 
       <div className="kasse-container">
-        <div className="left-panel">
-          <div className="order-header">
-            <button className="user-action-button">User Aktionen</button>
-            <button
-              className="member-select-button"
-              onClick={() => setShowMemberModal(true)}
-            >
+        <div className="flex flex-col w-[40%] h-full bg-muted p-2">
+          {/* Header: Member- und Tischauswahl */}
+          <div className="flex justify-around items-center bg-pink-500 p-2 rounded-md mb-2">
+            <Button variant="secondary">User Aktionen</Button>
+            <Button onClick={() => setShowMemberModal(true)}>
               {selectedMemberName
                 ? `Mitglied: ${selectedMemberName}`
                 : "Mitglied auswählen"}
-            </button>
-            <button
-              className="table-select-button"
-              onClick={() => setShowTableModal(true)}
-            >
+            </Button>
+            <Button onClick={() => setShowTableModal(true)}>
               {selectedTable ? `Tisch: ${selectedTable}` : "Tisch auswählen"}
-            </button>
+            </Button>
           </div>
 
-          {/* Bestell-Tabelle */}
-          <div className="order-details" ref={orderDetailsRef}>
-            {orders.length === 0 ? (
-              <>
-                <table className="order-table">
+          {/* Bestell-Liste */}
+          <div className="flex-1 flex flex-col overflow-hidden border rounded-md bg-white">
+            <div className="p-2 border-b text-sm font-semibold bg-gray-100">
+              Bestellung
+            </div>
+            <div ref={orderDetailsRef} className="flex-1 overflow-auto p-2">
+              {orders.length === 0 ? (
+                <p className="text-muted-foreground">Keine Bestellungen</p>
+              ) : (
+                <table className="w-full text-sm">
                   <thead>
-                    <tr>
-                      <th>Produkt</th>
-                      <th>Menge</th>
-                      <th>Preis CHF</th>
-                      <th>Subtotal CHF</th>
+                    <tr className="bg-gray-100">
+                      <th className="text-left p-2">Produkt</th>
+                      <th className="text-center">Menge</th>
+                      <th className="text-right">Preis</th>
+                      <th className="text-right">Subtotal</th>
                       <th></th>
                     </tr>
                   </thead>
+                  <tbody>
+                    {orders.map((order, index) => (
+                      <tr key={index} className="border-b last:border-none">
+                        <td className="p-2">{order.artikel.name}</td>
+                        <td className="p-2">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                updateQuantity(order.artikel.id, -1)
+                              }
+                            >
+                              -
+                            </Button>
+                            <span>{order.quantity}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                updateQuantity(order.artikel.id, 1)
+                              }
+                            >
+                              +
+                            </Button>
+                          </div>
+                        </td>
+                        <td className="text-right p-2">
+                          {order.price.toFixed(2)}
+                        </td>
+                        <td className="text-right p-2">
+                          {(order.price * order.quantity).toFixed(2)}
+                        </td>
+                        <td className="p-2">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => removeOrder(order.artikel.id)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
-                <span>Keine Bestellungen</span>
-              </>
-            ) : (
-              <table className="order-table">
-                <thead>
-                  <tr>
-                    <th>Produkt</th>
-                    <th>Menge</th>
-                    <th>Preis CHF</th>
-                    <th>Subtotal CHF</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((order, index) => (
-                    <tr key={index}>
-                      <td>{order.artikel.name}</td>
+              )}
+            </div>
 
-                      <td>
-                        <div className="quantity-controls">
-                          <button
-                            onClick={() => updateQuantity(order.artikel.id, -1)}
-                          >
-                            -
-                          </button>
-                          <span>{order.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(order.artikel.id, 1)}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </td>
-
-                      <td>{order.price.toFixed(2)}</td>
-                      <td>{(order.quantity * order.price).toFixed(2)}</td>
-                      <td>
-                        <button
-                          className="remove-button"
-                          onClick={() => removeOrder(order.artikel.id)}
-                          title="Entfernen"
-                        >
-                          <DeleteIcon
-                            fontSize="small"
-                            className="delete-icon"
-                          />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          <div className="order-total">
-            <p>Summe: {total.toFixed(2)} CHF</p>
-          </div>
-
-          <div className="order-footer">
-            <button className="order-button" onClick={handleCompleteOrder}>
-              Bestellung abschließen
-            </button>
+            {/* Total + Abschließen */}
+            <div className="p-2 border-t bg-gray-100 flex flex-col gap-2">
+              <div className="flex justify-between font-semibold">
+                <span>Summe:</span>
+                <span>{total.toFixed(2)} CHF</span>
+              </div>
+              <Button onClick={handleCompleteOrder}>
+                Bestellung abschliessen
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -326,7 +323,7 @@ const Kasse: React.FC = () => {
             <div className="modal">
               <h2>Mitglied auswählen</h2>
 
-              <input
+              <Input
                 type="text"
                 placeholder="Mitglied suchen"
                 value={memberSearch}
@@ -393,18 +390,11 @@ const Kasse: React.FC = () => {
             <div className="modal">
               <h2>Tischnummer wählen</h2>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "10px",
-                  marginBottom: "1rem",
-                }}
-              >
+              <div className="flex flex-wrap gap-2 mb-4">
                 {[...Array(maxDefaultTables)].map((_, index) => {
                   const num = index + 1;
                   return (
-                    <button
+                    <Button
                       key={num}
                       onClick={() => {
                         setSelectedTable(num);
@@ -415,13 +405,13 @@ const Kasse: React.FC = () => {
                       style={{ padding: "0.75rem", flex: "1 0 30%" }}
                     >
                       Tisch {num}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
 
               <div>
-                <input
+                <Input
                   type="number"
                   placeholder="Andere Tischnummer"
                   value={customTableInput}
@@ -432,7 +422,7 @@ const Kasse: React.FC = () => {
                     marginBottom: "0.5rem",
                   }}
                 />
-                <button
+                <Button
                   onClick={() => {
                     const parsed = parseInt(customTableInput);
                     if (!isNaN(parsed)) {
@@ -446,17 +436,17 @@ const Kasse: React.FC = () => {
                   style={{ width: "100%", padding: "0.5rem" }}
                 >
                   Tisch übernehmen
-                </button>
+                </Button>
               </div>
 
-              <button
+              <Button
                 className="modal-cancel-button"
                 onClick={() => setShowTableModal(false)}
                 style={{ marginTop: "1rem" }}
               >
                 Abbrechen
-              </button>
-              <button
+              </Button>
+              <Button
                 className="modal-clear-button"
                 onClick={() => {
                   setSelectedTable(null);
@@ -464,7 +454,7 @@ const Kasse: React.FC = () => {
                 }}
               >
                 Auswahl zurücksetzen
-              </button>
+              </Button>
             </div>
           </div>
         )}
