@@ -6,7 +6,9 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import OpenOrdersModal from "../components/OpenOrdersModal";
 import api from "../api"; // Axios-Instanz
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { MemberSelectDialog } from "@/components/MemberSelectDialog";
+import { TableSelectDialog } from "@/components/TableSelectDialog";
+import { OpenOrdersDialog } from "@/components/OpenOrdersDialog";
 
 // Artikel-Interface
 interface Artikel {
@@ -318,150 +320,46 @@ const Kasse: React.FC = () => {
           </div>
         </div>
 
-        {showMemberModal && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <h2>Mitglied auswählen</h2>
+        {/* Modals */}
+        <MemberSelectDialog
+          open={showMemberModal}
+          onClose={() => setShowMemberModal(false)}
+          members={members}
+          search={memberSearch}
+          setSearch={setMemberSearch}
+          onSelect={(member) => {
+            setSelectedMemberId(member.id);
+            setSelectedMemberName(`${member.first_name} ${member.last_name}`);
+            setSelectedTable(null);
+            setShowMemberModal(false);
+            setMemberSearch("");
+          }}
+          onClear={() => {
+            setSelectedMemberId(null);
+            setSelectedMemberName(null);
+            setShowMemberModal(false);
+          }}
+        />
 
-              <Input
-                type="text"
-                placeholder="Mitglied suchen"
-                value={memberSearch}
-                onChange={(e) => setMemberSearch(e.target.value)}
-                style={{
-                  width: "100%",
-                  marginBottom: "1rem",
-                  padding: "0.5rem",
-                }}
-              />
+        <TableSelectDialog
+          open={showTableModal}
+          onClose={() => setShowTableModal(false)}
+          onSelect={(num) => {
+            setSelectedTable(num);
+            setSelectedMemberId(null);
+            setSelectedMemberName(null);
+            setShowTableModal(false);
+          }}
+          onClear={() => {
+            setSelectedTable(null);
+            setShowTableModal(false);
+          }}
+        />
 
-              <ul className="member-list">
-                {Object.keys(groupedMembers)
-                  .sort()
-                  .map((letter) => (
-                    <li key={letter}>
-                      <div className="section-header">{letter}</div>
-                      <ul className="section-members">
-                        {groupedMembers[letter].map((member) => (
-                          <li key={member.id}>
-                            <button
-                              className="modal-member-button"
-                              onClick={() => {
-                                setSelectedMemberId(member.id);
-                                setSelectedMemberName(
-                                  `${member.first_name} ${member.last_name}`
-                                );
-                                setSelectedTable(null);
-                                setShowMemberModal(false);
-                                setMemberSearch("");
-                              }}
-                            >
-                              {member.first_name} {member.last_name}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
-              </ul>
-
-              <button
-                className="modal-cancel-button"
-                onClick={() => setShowMemberModal(false)}
-              >
-                Abbrechen
-              </button>
-              <button
-                className="modal-clear-button"
-                onClick={() => {
-                  setSelectedMemberId(null);
-                  setSelectedMemberName(null);
-                  setShowMemberModal(false);
-                }}
-              >
-                Auswahl zurücksetzen
-              </button>
-            </div>
-          </div>
-        )}
-
-        {showTableModal && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <h2>Tischnummer wählen</h2>
-
-              <div className="flex flex-wrap gap-2 mb-4">
-                {[...Array(maxDefaultTables)].map((_, index) => {
-                  const num = index + 1;
-                  return (
-                    <Button
-                      key={num}
-                      onClick={() => {
-                        setSelectedTable(num);
-                        setSelectedMemberId(null);
-                        setSelectedMemberName(null);
-                        setShowTableModal(false);
-                      }}
-                      style={{ padding: "0.75rem", flex: "1 0 30%" }}
-                    >
-                      Tisch {num}
-                    </Button>
-                  );
-                })}
-              </div>
-
-              <div>
-                <Input
-                  type="number"
-                  placeholder="Andere Tischnummer"
-                  value={customTableInput}
-                  onChange={(e) => setCustomTableInput(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "0.5rem",
-                    marginBottom: "0.5rem",
-                  }}
-                />
-                <Button
-                  onClick={() => {
-                    const parsed = parseInt(customTableInput);
-                    if (!isNaN(parsed)) {
-                      setSelectedTable(parsed);
-                      setSelectedMemberId(null); //  Mitglied abwählen
-                      setSelectedMemberName(null); //  Mitglied abwählen
-                      setCustomTableInput("");
-                      setShowTableModal(false);
-                    }
-                  }}
-                  style={{ width: "100%", padding: "0.5rem" }}
-                >
-                  Tisch übernehmen
-                </Button>
-              </div>
-
-              <Button
-                className="modal-cancel-button"
-                onClick={() => setShowTableModal(false)}
-                style={{ marginTop: "1rem" }}
-              >
-                Abbrechen
-              </Button>
-              <Button
-                className="modal-clear-button"
-                onClick={() => {
-                  setSelectedTable(null);
-                  setShowTableModal(false);
-                }}
-              >
-                Auswahl zurücksetzen
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {showOpenOrdersModal && (
-          <OpenOrdersModal onClose={() => setShowOpenOrdersModal(false)} />
-        )}
+        <OpenOrdersDialog
+          open={showOpenOrdersModal}
+          onClose={() => setShowOpenOrdersModal(false)}
+        />
       </div>
     </div>
   );
