@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import api from "@/api";
+import { Artikel } from "@/types";
 import { CupSoda, Shuffle, Utensils } from "lucide-react";
 
 interface ArticleTabsProps {
@@ -13,14 +14,6 @@ interface Kategorie {
   id: number;
   name: string;
   parent_id: number | null;
-}
-
-interface Artikel {
-  id: number;
-  name: string;
-  category_id: number;
-  price: number;
-  unit: string;
 }
 
 const mainCategories: Record<number, string> = {
@@ -36,15 +29,15 @@ const categoryIcons: Record<string, React.ElementType> = {
 };
 
 const categoryColors: Record<string, string> = {
-  Snacks: "bg-orange-400",
-  "Warme Speisen": "bg-red-400",
-  "Kalte Speisen": "bg-green-400",
-  "Süsswaren & Desserts": "bg-purple-400",
+  "Snacks": "bg-teal-400",
+  "Warme Speisen": "bg-lime-400",
+  "Kalte Speisen": "bg-indigo-400",
+  "Süsswaren & Desserts": "bg-pink-400",
   "Alkoholfreie Getränke": "bg-blue-400",
-  Heissgetränke: "bg-red-400",
+  "Heissgetränke": "bg-red-400",
   "Bier & Cider": "bg-yellow-400",
   "Wein & Sekt": "bg-rose-800",
-  "Spirituosen & Cocktails": "bg-orange-500",
+  "Spirituosen & Cocktails": "bg-teal-500",
 };
 
 const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
@@ -59,7 +52,7 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
       try {
         const [categoryResponse, productResponse] = await Promise.all([
           api.get("/categories"),
-          api.get("/products"),
+          api.get("/products?is_active=1"),
         ]);
 
         const categoryData = categoryResponse.data;
@@ -123,7 +116,7 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
       {Object.values(mainCategories).map((tab) => (
         <TabsContent key={tab} value={tab} className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
-            <div className="grid grid-cols-4 gap-2 p-2">
+            <div className="grid grid-cols-4 gap-4 p-2">
               {groupedArticles[tab]?.length ? (
                 groupedArticles[tab].map((item) => {
                   const category = categories.find(
