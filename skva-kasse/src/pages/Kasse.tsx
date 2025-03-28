@@ -143,10 +143,12 @@ const Kasse: React.FC = () => {
       setSelectedMemberName(null);
       setSelectedTable(null);
       alert("Bestellung gespeichert ✅");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Fehler beim Speichern:", error);
       const errorMessage =
-        error.response?.data?.error || "Ein Fehler ist aufgetreten";
+        error instanceof Error && error.message
+          ? error.message
+          : "Ein Fehler ist aufgetreten";
       alert("Fehler: " + errorMessage);
     }
   };
@@ -314,7 +316,7 @@ const Kasse: React.FC = () => {
               Offene Bestellungen
             </button>
           </div>
-          <div className="article-list">
+          <div className="article-list p-2">
             <ArticleTabs addToOrder={addToOrder} />
           </div>
         </div>
