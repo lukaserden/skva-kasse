@@ -1,14 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import "../styles/Kasse.css";
-import DropdownButton from "../components/Dropdown-Button";
 import ArticleTabs from "../components/ArticleTabs";
 import { Delete as DeleteIcon } from "lucide-react";
-// import OpenOrdersModal from "../components/OpenOrdersModal";
 import api from "../api"; // Axios-Instanz
 import { Button } from "@/components/ui/button";
 import { MemberSelectDialog } from "@/components/MemberSelectDialog";
 import { TableSelectDialog } from "@/components/TableSelectDialog";
 import { OpenOrdersDialog } from "@/components/OpenOrdersDialog";
+import { Member } from "../types";
 
 // Artikel-Interface
 interface Artikel {
@@ -24,8 +22,6 @@ interface OrderItem {
   quantity: number;
   price: number;
 }
-
-import { Member } from "../types";
 
 const Kasse: React.FC = () => {
   const [orders, setOrders] = useState<OrderItem[]>([]);
@@ -348,7 +344,7 @@ const Kasse: React.FC = () => {
             </Button>
           </div>
 
-          <div className="max-h-[85vh] flex-1 overflow-hidden border rounded-md bg-white">
+          <div className="max-h-[85vh] flex-1 p-2 overflow-hidden border rounded-md bg-white">
             <ArticleTabs addToOrder={addToOrder} />
           </div>
         </div>
