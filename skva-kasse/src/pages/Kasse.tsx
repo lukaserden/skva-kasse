@@ -191,18 +191,26 @@ const Kasse: React.FC = () => {
     try {
       const res = await api.get(`/transactions/${orderId}`);
       const transaction = res.data.data;
-  
-      const loadedOrders = transaction.items.map((item: { product_id: number; product_name: string; category_id: number; price: number; quantity: number }) => ({
-        artikel: {
-          id: item.product_id,
-          name: item.product_name, // sollte das Backend mitliefern
-          category_id: item.category_id,
-          price: item.price,
-        },
-        quantity: item.quantity,
-        price: item.price / 100,
-      }));
-  
+
+      const loadedOrders = transaction.items.map(
+        (item: {
+          product_id: number;
+          product_name: string;
+          category_id: number;
+          price: number;
+          quantity: number;
+        }) => ({
+          artikel: {
+            id: item.product_id,
+            name: item.product_name, // sollte das Backend mitliefern
+            category_id: item.category_id,
+            price: item.price,
+          },
+          quantity: item.quantity,
+          price: item.price / 100,
+        })
+      );
+
       setOrders(loadedOrders);
       setSelectedMemberId(transaction.member_id);
       setSelectedTable(transaction.table_number);
@@ -213,13 +221,11 @@ const Kasse: React.FC = () => {
   };
 
   return (
-    <div className="kasse-wrapper">
-      <nav className="navbar">
-        <h1>Kassen-System</h1>
-        <ul>
-          <li>
-            <a href="#">Start</a>
-          </li>
+    <div className="flex flex-col h-screen">
+      {/* Navbar */}
+      <nav className="flex justify-between items-center bg-gray-900 text-white p-4">
+        <h1 className="text-xl font-semibold">Kassen-System</h1>
+        <ul className="flex gap-4">
           <li>
             <a href="/admin">Einstellungen</a>
           </li>
@@ -227,10 +233,11 @@ const Kasse: React.FC = () => {
             <a href="#">Logout</a>
           </li>
         </ul>
-        <DropdownButton />
       </nav>
 
-      <div className="kasse-container">
+      {/* Main Content */}
+      <div className="flex flex-1 bg-black">
+        {/* Linkes Panel */}
         <div className="flex flex-col w-[40%] h-full bg-muted p-2">
           {/* Header: Member- und Tischauswahl */}
           <div className="flex justify-around items-center bg-red-300 p-2 rounded-md mb-2">
@@ -303,7 +310,10 @@ const Kasse: React.FC = () => {
                             variant="ghost"
                             onClick={() => removeOrder(order.artikel.id)}
                           >
-                            <DeleteIcon className=" text-red-600 " fontSize="small" />
+                            <DeleteIcon
+                              className=" text-red-600 "
+                              fontSize="small"
+                            />
                           </Button>
                         </td>
                       </tr>
@@ -326,64 +336,64 @@ const Kasse: React.FC = () => {
           </div>
         </div>
 
-        <div className="right-panel">
-          <div className="article-header">
-            <h2>Artikel</h2>
-            <button
-              className="open-orders-button"
+        {/* Rechte Seite: Artikel-Liste */}
+        <div className="flex flex-col w-[60%] h-full bg-muted p-2">
+          <div className="flex justify-between items-center bg-green-400 text-white p-2 rounded-md mb-2">
+            <h2 className="text-lg font-semibold">Artikel</h2>
+            <Button
+              variant="secondary"
               onClick={() => setShowOpenOrdersModal(true)}
             >
               Offene Bestellungen
-            </button>
+            </Button>
           </div>
-          <div className="article-list p-2">
+
+          <div className="max-h-[85vh] flex-1 overflow-hidden border rounded-md bg-white">
             <ArticleTabs addToOrder={addToOrder} />
           </div>
         </div>
 
         {/* Modals */}
-          <MemberSelectDialog
-            open={showMemberModal}
-            onClose={() => setShowMemberModal(false)}
-            members={members}
-            search={memberSearch}
-            setSearch={setMemberSearch}
-            onSelect={(member) => {
-              setSelectedMemberId(member.id);
-              setSelectedMemberName(`${member.first_name} ${member.last_name}`);
-              setSelectedTable(null);
-              setShowMemberModal(false);
-              setMemberSearch("");
-            }}
-            onClear={() => {
-              setSelectedMemberId(null);
-              setSelectedMemberName(null);
-              setShowMemberModal(false);
-            }}
-          />
-        
+        <MemberSelectDialog
+          open={showMemberModal}
+          onClose={() => setShowMemberModal(false)}
+          members={members}
+          search={memberSearch}
+          setSearch={setMemberSearch}
+          onSelect={(member) => {
+            setSelectedMemberId(member.id);
+            setSelectedMemberName(`${member.first_name} ${member.last_name}`);
+            setSelectedTable(null);
+            setShowMemberModal(false);
+            setMemberSearch("");
+          }}
+          onClear={() => {
+            setSelectedMemberId(null);
+            setSelectedMemberName(null);
+            setShowMemberModal(false);
+          }}
+        />
 
-          <TableSelectDialog
-            open={showTableModal}
-            onClose={() => setShowTableModal(false)}
-            onSelect={(num) => {
-              setSelectedTable(num);
-              setSelectedMemberId(null);
-              setSelectedMemberName(null);
-              setShowTableModal(false);
-            }}
-            onClear={() => {
-              setSelectedTable(null);
-              setShowTableModal(false);
-            }}
-          />
-        
+        <TableSelectDialog
+          open={showTableModal}
+          onClose={() => setShowTableModal(false)}
+          onSelect={(num) => {
+            setSelectedTable(num);
+            setSelectedMemberId(null);
+            setSelectedMemberName(null);
+            setShowTableModal(false);
+          }}
+          onClear={() => {
+            setSelectedTable(null);
+            setShowTableModal(false);
+          }}
+        />
 
         <OpenOrdersDialog
-  open={showOpenOrdersModal}
-  onClose={() => setShowOpenOrdersModal(false)}
-  onLoadOrder={handleLoadOrder}
-/>
+          open={showOpenOrdersModal}
+          onClose={() => setShowOpenOrdersModal(false)}
+          onLoadOrder={handleLoadOrder}
+        />
       </div>
     </div>
   );
