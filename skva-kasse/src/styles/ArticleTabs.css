@@ -12,12 +12,12 @@
 }
 
 .tab-button {
-  flex: 1; /* Sorgt für gleichmäßige Größe */
-  padding: 15px 20px; /* Größer für Touch-Bedienung */
+  flex: 1; /* Sorgt für gleichmässige Grösse */
+  padding: 15px 20px; /* Grösser für Touch-Bedienung */
   border: none;
   background-color: transparent;
   cursor: pointer;
-  font-size: 18px; /* Größere Schrift für Lesbarkeit */
+  font-size: 18px; /* Grössere Schrift für Lesbarkeit */
   font-weight: bold;
   color: #00bfffc8;
   position: relative; /* Für den Unterstrich */
@@ -45,31 +45,31 @@
 }
 
 .article-items {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 0.5rem; /* Weniger Abstand */
-    border-radius: 5px;
-    border: 2px solid #0d00ff;
-    max-height: 55dvh; /* Falls nötig */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 0.5rem; /* Weniger Abstand */
+  border-radius: 5px;
+  border: 2px solid #0d00ff;
+  max-height: 55dvh; /* Falls nötig */
 }
 
 .article-item {
-    background-color: white;
-    color: black;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-align: center;
-    margin: 0; /* Entfernt unerwünschten Abstand */
-    line-height: 1; /* Verringert Zeilenhöhe */
-    width: 10rem; /* Fixe Breite für bessere Anordnung */
-    height: 5rem; /* Fixe Höhe für gleichmäßige Anordnung */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background-color: white;
+  color: black;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 0; /* Entfernt unerwünschten Abstand */
+  line-height: 1; /* Verringert Zeilenhöhe */
+  width: 10rem; /* Fixe Breite für bessere Anordnung */
+  height: 5rem; /* Fixe Höhe für gleichmässige Anordnung */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .article-footer {
@@ -81,14 +81,43 @@
   color: white;
 }
 
-
-.btn-orange { background-color: orange; color: white; }
-.btn-red { background-color: red; color: white; }
-.btn-green { background-color: green; color: white; }
-.btn-purple { background-color: purple; color: white; }
-.btn-blue { background-color: blue; color: white; }
-.btn-brown { background-color: brown; color: white; }
-.btn-yellow { background-color: yellow; color: black; }
-.btn-pink { background-color: pink; color: black; }
-.btn-darkblue { background-color: darkblue; color: white; }
-.btn-default { background-color: grey; color: white; }
+.btn-orange {
+  background-color: orange;
+  color: white;
+}
+.btn-red {
+  background-color: red;
+  color: white;
+}
+.btn-green {
+  background-color: green;
+  color: white;
+}
+.btn-purple {
+  background-color: purple;
+  color: white;
+}
+.btn-blue {
+  background-color: blue;
+  color: white;
+}
+.btn-brown {
+  background-color: brown;
+  color: white;
+}
+.btn-yellow {
+  background-color: yellow;
+  color: black;
+}
+.btn-pink {
+  background-color: pink;
+  color: black;
+}
+.btn-darkblue {
+  background-color: darkblue;
+  color: white;
+}
+.btn-default {
+  background-color: grey;
+  color: white;
+}

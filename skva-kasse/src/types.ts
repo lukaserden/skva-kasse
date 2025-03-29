@@ -28,6 +28,12 @@ export interface Artikel {
   updated_at: string;
 }
 
+export interface GuestMember {
+  id: null;
+  first_name: "Gast";
+  last_name: "";
+}
+
 //TYPES
 export type User = {
   id: number;

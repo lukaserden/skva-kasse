@@ -18,8 +18,8 @@
 .sidebar-item {
   display: flex;
   align-items: center;
-  gap: 15px;           /* Abstand zwischen Icon und Text */
-  padding: 12px 12px;   /* Innenabstand, sorgt für bessere Klickbarkeit */
+  gap: 15px; /* Abstand zwischen Icon und Text */
+  padding: 12px 12px; /* Innenabstand, sorgt für bessere Klickbarkeit */
   transition: background-color 0.2s;
 }
 
@@ -36,9 +36,9 @@
   font-weight: bolder;
 }
 
-/* Icon-Größe und Ausrichtung */
+/* Icon-Grösse und Ausrichtung */
 .sidebar-icon {
-  font-size: 24px;  /* Größe des Icons anpassen */
+  font-size: 24px; /* Grösse des Icons anpassen */
 }
 
 /* Textformatierung */

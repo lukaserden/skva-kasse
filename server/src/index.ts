@@ -19,7 +19,7 @@ import cookieParser from "cookie-parser";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const CORS_ORIGIN = process.env.CORS_ORIGIN;
 
 app.use(
@@ -45,6 +45,6 @@ app.use("/members", authMiddleware, members);
 app.use("/member-states", authMiddleware, memberStates);
 
 /* -------------------- Server starten -------------------- */
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server läuft auf http://localhost:${PORT}`);
 });

@@ -16,7 +16,7 @@ export const TableSelectDialog: React.FC<TableSelectDialogProps> = ({
   onSelect,
   onClear,
 }) => {
-  const maxDefaultTables = 6;
+  const maxDefaultTables = 5;
   const [customTable, setCustomTable] = useState("");
 
   return (
@@ -52,6 +52,7 @@ export const TableSelectDialog: React.FC<TableSelectDialogProps> = ({
         />
         <Button
           className="w-full mt-2"
+          variant="outline"
           onClick={() => {
             const parsed = parseInt(customTable);
             if (!isNaN(parsed)) {

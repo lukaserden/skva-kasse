@@ -105,7 +105,7 @@
 //         )}
 
 //         <button className="modal-cancel-button" onClick={onClose}>
-//           Schließen
+//           Schliessen
 //         </button>
 //       </div>
 //     </div>

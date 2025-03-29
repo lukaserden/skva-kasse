@@ -7,6 +7,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Member } from "@/types";
+import { useState } from "react";
 
 interface MemberSelectDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface MemberSelectDialogProps {
   setSearch: (value: string) => void;
   onSelect: (member: Member) => void;
   onClear: () => void;
+  onSelectGuest: (guestName: string) => void;
 }
 
 export const MemberSelectDialog: React.FC<MemberSelectDialogProps> = ({
@@ -26,7 +28,11 @@ export const MemberSelectDialog: React.FC<MemberSelectDialogProps> = ({
   setSearch,
   onSelect,
   onClear,
+  onSelectGuest,
 }) => {
+  const [showGuestInput, setShowGuestInput] = useState(false);
+  const [guestName, setGuestName] = useState("");
+
   const groupedMembers: Record<string, Member[]> = {};
 
   members
@@ -40,6 +46,14 @@ export const MemberSelectDialog: React.FC<MemberSelectDialogProps> = ({
       if (!groupedMembers[letter]) groupedMembers[letter] = [];
       groupedMembers[letter].push(m);
     });
+
+  const handleGuestConfirm = () => {
+    if (guestName.trim() !== "") {
+      onSelectGuest(guestName.trim());
+      setGuestName("");
+      setShowGuestInput(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -79,13 +93,32 @@ export const MemberSelectDialog: React.FC<MemberSelectDialogProps> = ({
             ))}
         </ul>
 
-        <div className="flex gap-2 mt-2">
-          <Button variant="secondary" onClick={onClose} className="flex-1">
-            Abbrechen
-          </Button>
-          <Button variant="destructive" onClick={onClear} className="flex-1">
-            Auswahl zurücksetzen
-          </Button>
+        <div className="flex flex-col gap-2 mt-4">
+          {!showGuestInput ? (
+            <Button variant="outline" onClick={() => setShowGuestInput(true)}>
+              Als Gast buchen
+            </Button>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Input
+                placeholder="Gastname eingeben"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+              />
+              <Button onClick={handleGuestConfirm} disabled={guestName.trim() === ""}>
+                Gast übernehmen
+              </Button>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={onClose} className="flex-1">
+              Abbrechen
+            </Button>
+            <Button variant="destructive" onClick={onClear} className="flex-1">
+              Auswahl zurücksetzen
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

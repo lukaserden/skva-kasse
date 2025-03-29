@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS service_units (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, -- Eindeutige ID der Serviceeinheit
     start_time DATETIME NOT NULL, -- Startzeit der Einheit
     end_time DATETIME NOT NULL, -- Endzeit der Einheit
-    status_id INTEGER NOT NULL, -- Verweis auf `service_statuses.id`
-    FOREIGN KEY (status_id) REFERENCES service_statuses(id)
+    status_id INTEGER NOT NULL, -- Verweis auf `service_states.id`
+    FOREIGN KEY (status_id) REFERENCES service_states(id)
 );
 
 CREATE TABLE IF NOT EXISTS user_roles (

@@ -89,7 +89,9 @@ export const OpenOrdersDialog: React.FC<OpenOrdersDialogProps> = ({
                       size="sm"
                       variant="destructive"
                       onClick={async () => {
-                        if (!window.confirm("Bestellung wirklich abschließen?"))
+                        if (
+                          !window.confirm("Bestellung wirklich abschliessen?")
+                        )
                           return;
                         try {
                           await api.put(`/transactions/${o.id}/status`, {
@@ -97,11 +99,11 @@ export const OpenOrdersDialog: React.FC<OpenOrdersDialogProps> = ({
                           });
                           onClose();
                         } catch (error) {
-                          console.error("Fehler beim Abschließen:", error);
+                          console.error("Fehler beim Abschliessen:", error);
                         }
                       }}
                     >
-                      Abschließen
+                      Abschliessen
                     </Button>
                   </div>
                 </li>
@@ -111,7 +113,7 @@ export const OpenOrdersDialog: React.FC<OpenOrdersDialogProps> = ({
         )}
 
         <Button variant="secondary" onClick={onClose} className="w-full mt-2">
-          Schließen
+          Schliessen
         </Button>
       </DialogContent>
     </Dialog>

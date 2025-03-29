@@ -29,12 +29,12 @@ const categoryIcons: Record<string, React.ElementType> = {
 };
 
 const categoryColors: Record<string, string> = {
-  "Snacks": "bg-teal-400",
+  Snacks: "bg-teal-400",
   "Warme Speisen": "bg-lime-400",
   "Kalte Speisen": "bg-indigo-400",
   "Süsswaren & Desserts": "bg-pink-400",
   "Alkoholfreie Getränke": "bg-blue-400",
-  "Heissgetränke": "bg-red-400",
+  Heissgetränke: "bg-red-400",
   "Bier & Cider": "bg-yellow-400",
   "Wein & Sekt": "bg-rose-800",
   "Spirituosen & Cocktails": "bg-teal-500",
@@ -93,7 +93,7 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
       className="w-full h-full flex flex-col"
     >
       {/* Tabs List */}
-      <TabsList className="grid grid-cols-3 w-full h-12">
+      <TabsList className="grid grid-cols-3 w-full h-12 bg-gray-200 rounded-t-lg">
         {Object.values(mainCategories).map((tab) => {
           const Icon = categoryIcons[tab]; // Hole das passende Icon
 
@@ -103,8 +103,8 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
               value={tab}
               className="flex items-center justify-center "
             >
-              {/* Vergrößertes Icon */}
-              <Icon className="mr-2 w-6 h-6" />{" "}
+              {/* Vergrössertes Icon */}
+              <Icon className="gap-2" />{" "}
               {/* Füge das Icon links neben dem Text hinzu */}
               {tab}
             </TabsTrigger>
@@ -114,8 +114,12 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
 
       {/* Tabs Content */}
       {Object.values(mainCategories).map((tab) => (
-        <TabsContent key={tab} value={tab} className="max-h-[80vh] flex flex-col flex-1 overflow-hidden">
-          <ScrollArea className="h-full"> 
+        <TabsContent
+          key={tab}
+          value={tab}
+          className="max-h-[80vh] flex flex-col flex-1 overflow-hidden"
+        >
+          <ScrollArea className="h-full">
             <div className="grid grid-cols-4 gap-2 p-2">
               {groupedArticles[tab]?.length ? (
                 groupedArticles[tab].map((item) => {
@@ -130,7 +134,7 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
                     <Button
                       key={item.id}
                       variant="secondary"
-                      className="flex flex-col items-center p-1 rounded-xl relative h-22 transform transition-all duration-100 active:scale-95 active:bg-opacity-90"
+                      className="flex flex-col items-center bg-gray-200 p-0 rounded-xl relative h-22 transform transition-all duration-100 active:scale-95 active:bg-opacity-95 "
                       onClick={() => addToOrder(item)}
                     >
                       {/* Farbbalken oben */}
@@ -138,12 +142,12 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
                         className={`absolute top-0 left-0 w-full h-3 rounded-t-xl ${colorClass}`}
                       />
                       {/* Artikelname */}
-                      <span className="text-lg font-semibold">{item.name}</span>
+                      <span className="text-xl font-semibold">{item.name}</span>
                       <div className="flex justify-between w-full px-2 mt-1">
-                        <span className="text-xs opacity-70">
+                        <span className="text-xs font-mono opacity-70">
                           CHF {(item.price / 100).toFixed(2)}
                         </span>
-                        <span className="text-xs opacity-70">
+                        <span className="text-xs font-mono opacity-70">
                           {item.unit !== null ? `${item.unit}` : ""}
                         </span>
                       </div>

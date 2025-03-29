@@ -1,14 +1,15 @@
+// Aufgeräumte und strukturierte Version deiner Kasse-Seite
+
 import React, { useState, useRef, useEffect } from "react";
+import api from "../api";
 import ArticleTabs from "../components/ArticleTabs";
-import { Delete as DeleteIcon } from "lucide-react";
-import api from "../api"; // Axios-Instanz
+import { Delete as DeleteIcon, ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MemberSelectDialog } from "@/components/MemberSelectDialog";
 import { TableSelectDialog } from "@/components/TableSelectDialog";
 import { OpenOrdersDialog } from "@/components/OpenOrdersDialog";
-import { Member } from "../types";
+import { Member, GuestMember } from "../types";
 
-// Artikel-Interface
 interface Artikel {
   id: number;
   name: string;
@@ -16,7 +17,6 @@ interface Artikel {
   price: number;
 }
 
-// Bestellobjekt mit Menge und Preis
 interface OrderItem {
   artikel: Artikel;
   quantity: number;
@@ -24,47 +24,57 @@ interface OrderItem {
 }
 
 const Kasse: React.FC = () => {
+  // States für Bestellung
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const orderDetailsRef = useRef<HTMLDivElement>(null);
 
-  // Mitglieder-Modal
-  const [showMemberModal, setShowMemberModal] = useState(false);
-  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
-  const [selectedMemberName, setSelectedMemberName] = useState<string | null>(
-    null
-  );
-
-  // Mitglieder laden
+  // States für Member & Table Auswahl
   const [members, setMembers] = useState<Member[]>([]);
+  const [selectedMember, setSelectedMember] = useState<Member | GuestMember | null>(null);
+  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
 
-  // Tisch-Modal
   const [selectedTable, setSelectedTable] = useState<number | null>(null);
-  const [showTableModal, setShowTableModal] = useState(false);
-  // const [customTableInput, setCustomTableInput] = useState("");
-  // const maxDefaultTables = 6;
+  const [isTableDialogOpen, setIsTableDialogOpen] = useState(false);
 
-  // Offene Bestellungen-Modal
-  const [showOpenOrdersModal, setShowOpenOrdersModal] = useState(false);
+  const [isOpenOrdersDialogOpen, setIsOpenOrdersDialogOpen] = useState(false);
+
+  // Mitglieder laden
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const response = await api.get("/members");
+        setMembers(response.data.data);
+      } catch (error) {
+        console.error("Fehler beim Laden der Mitglieder:", error);
+      }
+    };
+
+    fetchMembers();
+  }, []);
+
+  // Auto-Scroll für Bestell-Details
+  useEffect(() => {
+    if (orderDetailsRef.current) {
+      orderDetailsRef.current.scrollTop = orderDetailsRef.current.scrollHeight;
+    }
+  }, [orders]);
 
   // Artikel zur Bestellung hinzufügen
   const addToOrder = (item: Artikel) => {
-    const price = item.price / 100; // 💰 Cent → Franken
-
+    const price = item.price / 100;
     setOrders((prevOrders) => {
       const existing = prevOrders.find((o) => o.artikel.id === item.id);
-
       if (existing) {
         return prevOrders.map((o) =>
           o.artikel.id === item.id ? { ...o, quantity: o.quantity + 1 } : o
         );
       }
-
       return [...prevOrders, { artikel: item, quantity: 1, price }];
     });
   };
 
-  // Menge eines Artikels in der Bestellung anpassen
+  // Menge anpassen
   const updateQuantity = (artikelId: number, delta: number) => {
     setOrders((prevOrders) =>
       prevOrders
@@ -79,48 +89,38 @@ const Kasse: React.FC = () => {
 
   // Bestellung entfernen
   const removeOrder = (artikelId: number) => {
-    setOrders((prevOrders) =>
-      prevOrders.filter((o) => o.artikel.id !== artikelId)
-    );
+    setOrders((prevOrders) => prevOrders.filter((o) => o.artikel.id !== artikelId));
   };
 
-  // Auto-Scroll nach unten bei neuer Bestellung
-  useEffect(() => {
-    if (orderDetailsRef.current) {
-      orderDetailsRef.current.scrollTop = orderDetailsRef.current.scrollHeight;
-    }
-  }, [orders]);
-
-  // Bestellung abschliessen -> Post-Request an API senden
+  // Bestellung abschliessen
   const handleCompleteOrder = async () => {
     if (orders.length === 0) {
       alert("Keine Bestellungen vorhanden");
       return;
     }
 
-    if (!selectedMemberId && !selectedTable) {
+    if (!selectedMember && !selectedTable) {
       alert("Bitte wähle ein Mitglied oder einen Tisch aus.");
       return;
     }
 
-    if (selectedMemberId && selectedTable) {
+    if (selectedMember && selectedTable) {
       alert("Es darf nur ein Tisch ODER ein Mitglied ausgewählt sein.");
       return;
     }
 
-    if (!window.confirm("Möchtest du die Bestellung wirklich abschließen?")) {
+    if (!window.confirm("Möchtest du die Bestellung wirklich abschliessen?")) {
       return;
     }
 
-    // ✨ Transaktion vorbereiten
     const payload = {
-      member_id: selectedMemberId ?? null,
+      member_id: selectedMember?.id ?? null,
       table_number: selectedTable ?? null,
       payment_method: "cash",
       status: "open",
       total_amount: Math.round(
         orders.reduce((sum, o) => sum + o.quantity * o.price, 0) * 100
-      ), // wieder in Rappen umrechnen
+      ),
       items: orders.map((o) => ({
         product_id: o.artikel.id,
         quantity: o.quantity,
@@ -130,91 +130,48 @@ const Kasse: React.FC = () => {
 
     try {
       const response = await api.post("/transactions", payload);
-
       console.log("Transaktion erfolgreich gespeichert:", response.data.data);
-
-      // 🧹 Reset
       setOrders([]);
-      setSelectedMemberId(null);
-      setSelectedMemberName(null);
+      setSelectedMember(null);
       setSelectedTable(null);
       alert("Bestellung gespeichert ✅");
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Fehler beim Speichern:", error);
-      const errorMessage =
-        error instanceof Error && error.message
-          ? error.message
-          : "Ein Fehler ist aufgetreten";
-      alert("Fehler: " + errorMessage);
+      alert("Fehler: Ein Fehler ist aufgetreten");
     }
   };
 
-  const total = orders.reduce((sum, o) => sum + o.quantity * o.price, 0);
-
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const response = await api.get("/members");
-        setMembers(response.data.data);
-      } catch (error) {
-        console.error("Fehler beim Laden der Mitglieder:", error);
-      }
-    };
-
-    fetchMembers();
-  }, []);
-
-  const filtered = members.filter((m) =>
-    `${m.first_name} ${m.last_name}`
-      .toLowerCase()
-      .includes(memberSearch.toLowerCase())
-  );
-
-  const groupedMembers: Record<string, Member[]> = {};
-
-  filtered.forEach((m) => {
-    const name = `${m.first_name} ${m.last_name}`;
-    const letter = name.charAt(0).toUpperCase();
-
-    if (!groupedMembers[letter]) {
-      groupedMembers[letter] = [];
-    }
-
-    groupedMembers[letter].push(m);
-  });
-
+  // Offene Bestellung laden
   const handleLoadOrder = async (orderId: number) => {
     try {
       const res = await api.get(`/transactions/${orderId}`);
       const transaction = res.data.data;
 
-      const loadedOrders = transaction.items.map(
-        (item: {
-          product_id: number;
-          product_name: string;
-          category_id: number;
-          price: number;
-          quantity: number;
-        }) => ({
-          artikel: {
-            id: item.product_id,
-            name: item.product_name, // sollte das Backend mitliefern
-            category_id: item.category_id,
-            price: item.price,
-          },
-          quantity: item.quantity,
-          price: item.price / 100,
-        })
-      );
+      const loadedOrders = transaction.items.map((item: any) => ({
+        artikel: {
+          id: item.product_id,
+          name: item.product_name,
+          category_id: item.category_id,
+          price: item.price,
+        },
+        quantity: item.quantity,
+        price: item.price / 100,
+      }));
 
       setOrders(loadedOrders);
-      setSelectedMemberId(transaction.member_id);
+      setSelectedMember(
+        transaction.member_id
+          ? members.find((m) => m.id === transaction.member_id) ?? null
+          : null
+      );
       setSelectedTable(transaction.table_number);
-      setShowOpenOrdersModal(false);
+      setIsOpenOrdersDialogOpen(false);
     } catch (error) {
       console.error("Fehler beim Laden der Bestellung:", error);
     }
   };
+
+  const total = orders.reduce((sum, o) => sum + o.quantity * o.price, 0);
 
   return (
     <div className="flex flex-col h-screen">
@@ -235,15 +192,15 @@ const Kasse: React.FC = () => {
       <div className="flex flex-1 bg-black">
         {/* Linkes Panel */}
         <div className="flex flex-col w-[40%] h-full bg-muted p-2">
-          {/* Header: Member- und Tischauswahl */}
+          {/* Header */}
           <div className="flex justify-around items-center bg-red-300 p-2 rounded-md mb-2">
             <Button variant="secondary">User Aktionen</Button>
-            <Button onClick={() => setShowMemberModal(true)}>
-              {selectedMemberName
-                ? `Mitglied: ${selectedMemberName}`
+            <Button onClick={() => setIsMemberDialogOpen(true)}>
+              {selectedMember
+                ? `Mitglied: ${selectedMember.first_name}`
                 : "Mitglied auswählen"}
             </Button>
-            <Button onClick={() => setShowTableModal(true)}>
+            <Button onClick={() => setIsTableDialogOpen(true)}>
               {selectedTable ? `Tisch: ${selectedTable}` : "Tisch auswählen"}
             </Button>
           </div>
@@ -276,9 +233,7 @@ const Kasse: React.FC = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() =>
-                                updateQuantity(order.artikel.id, -1)
-                              }
+                              onClick={() => updateQuantity(order.artikel.id, -1)}
                             >
                               -
                             </Button>
@@ -286,17 +241,13 @@ const Kasse: React.FC = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() =>
-                                updateQuantity(order.artikel.id, 1)
-                              }
+                              onClick={() => updateQuantity(order.artikel.id, 1)}
                             >
                               +
                             </Button>
                           </div>
                         </td>
-                        <td className="text-right p-2">
-                          {order.price.toFixed(2)}
-                        </td>
+                        <td className="text-right p-2">{order.price.toFixed(2)}</td>
                         <td className="text-right p-2">
                           {(order.price * order.quantity).toFixed(2)}
                         </td>
@@ -306,10 +257,7 @@ const Kasse: React.FC = () => {
                             variant="ghost"
                             onClick={() => removeOrder(order.artikel.id)}
                           >
-                            <DeleteIcon
-                              className=" text-red-600 "
-                              fontSize="small"
-                            />
+                            <DeleteIcon className=" text-red-600 " fontSize="small" />
                           </Button>
                         </td>
                       </tr>
@@ -319,27 +267,27 @@ const Kasse: React.FC = () => {
               )}
             </div>
 
-            {/* Total + Abschließen */}
+            {/* Total + Abschliessen */}
             <div className="p-2 border-t bg-gray-100 flex flex-col gap-2">
               <div className="flex justify-between font-semibold">
                 <span>Summe:</span>
                 <span>{total.toFixed(2)} CHF</span>
               </div>
-              <Button onClick={handleCompleteOrder}>
-                Bestellung abschliessen
-              </Button>
+              <Button onClick={handleCompleteOrder}>Bestellung abschliessen</Button>
             </div>
           </div>
         </div>
 
-        {/* Rechte Seite: Artikel-Liste */}
+        {/* Rechte Seite */}
         <div className="flex flex-col w-[60%] h-full bg-muted p-2">
           <div className="flex justify-between items-center bg-green-400 text-white p-2 rounded-md mb-2">
             <h2 className="text-lg font-semibold">Artikel</h2>
             <Button
+              className="gap-2 text-lg"
               variant="secondary"
-              onClick={() => setShowOpenOrdersModal(true)}
+              onClick={() => setIsOpenOrdersDialogOpen(true)}
             >
+              <ReceiptText className="gap-2" />
               Offene Bestellungen
             </Button>
           </div>
@@ -351,43 +299,38 @@ const Kasse: React.FC = () => {
 
         {/* Modals */}
         <MemberSelectDialog
-          open={showMemberModal}
-          onClose={() => setShowMemberModal(false)}
+          open={isMemberDialogOpen}
+          onClose={() => setIsMemberDialogOpen(false)}
           members={members}
           search={memberSearch}
           setSearch={setMemberSearch}
           onSelect={(member) => {
-            setSelectedMemberId(member.id);
-            setSelectedMemberName(`${member.first_name} ${member.last_name}`);
-            setSelectedTable(null);
-            setShowMemberModal(false);
-            setMemberSearch("");
+            setSelectedMember(member);
+            setSelectedTable(null); // Mitglied gewählt → Tisch löschen
+            setIsMemberDialogOpen(false);
           }}
-          onClear={() => {
-            setSelectedMemberId(null);
-            setSelectedMemberName(null);
-            setShowMemberModal(false);
+          onClear={() => setSelectedMember(null)}
+          onSelectGuest={(guestName) => {
+            setSelectedMember({ id: null, first_name: guestName, last_name: "" });
+            setSelectedTable(null); // Gast gewählt → Tisch löschen
+            setIsMemberDialogOpen(false);
           }}
         />
 
         <TableSelectDialog
-          open={showTableModal}
-          onClose={() => setShowTableModal(false)}
+          open={isTableDialogOpen}
+          onClose={() => setIsTableDialogOpen(false)}
           onSelect={(num) => {
             setSelectedTable(num);
-            setSelectedMemberId(null);
-            setSelectedMemberName(null);
-            setShowTableModal(false);
+            setSelectedMember(null); // Tisch gewählt → Mitglied oder Gast löschen
+            setIsTableDialogOpen(false);
           }}
-          onClear={() => {
-            setSelectedTable(null);
-            setShowTableModal(false);
-          }}
+          onClear={() => setSelectedTable(null)}
         />
 
         <OpenOrdersDialog
-          open={showOpenOrdersModal}
-          onClose={() => setShowOpenOrdersModal(false)}
+          open={isOpenOrdersDialogOpen}
+          onClose={() => setIsOpenOrdersDialogOpen(false)}
           onLoadOrder={handleLoadOrder}
         />
       </div>
