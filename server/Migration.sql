@@ -64,6 +64,11 @@ CREATE TABLE IF NOT EXISTS users (
     role_id INTEGER NOT NULL, -- Verweis auf die Benutzerrolle
     is_active INTEGER DEFAULT 1, -- 1 = aktiv, 0 = deaktiviert
     created_at DATETIME DEFAULT (datetime('now')),
+    updated_at DATETIME DEFAULT (datetime('now')), -- Letzte Aktualisierung
+    created_by INTEGER NULL, -- Ersteller der Zeile
+    updated_by INTEGER NULL, -- Letzte Änderung
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (updated_by) REFERENCES users(id),
     FOREIGN KEY (member_id) REFERENCES members(id),
     FOREIGN KEY (role_id) REFERENCES user_roles(id)
 );
@@ -80,12 +85,17 @@ CREATE TABLE IF NOT EXISTS members (
     birthdate DATETIME NULL, -- Geburtsdatum
     email TEXT NULL, -- E-Mail-Adresse (optional)
     phone TEXT NULL, -- Telefonnummer
-    membership_number TEXT UNIQUE NOT NULL, -- Mitgliedsnummer
+    membership_number TEXT UNIQUE NULL, -- Mitgliedsnummer
     member_state_id INTEGER NOT NULL, -- Verweis auf den Mitgliedsstatus
-    discount INTEGER DEFAULT 0, -- Rabatt für Mitglieder
     is_active INTEGER DEFAULT 1, -- 1 = aktiv, 0 = deaktiviert
     is_service_required INTEGER DEFAULT 1, -- 1 = dienstpflichtig, 0 = befreit
     created_at DATETIME DEFAULT (datetime('now')),
+    updated_at DATETIME DEFAULT (datetime('now')), -- Letzte Aktualisierung
+    created_by INTEGER NULL, -- Ersteller der Zeile
+    updated_by INTEGER NULL, -- Letzte Änderung
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (updated_by) REFERENCES users(id),
+    FOREIGN KEY (member_id) REFERENCES members(id),
     FOREIGN KEY (member_state_id) REFERENCES member_states(id)
 );
 
@@ -97,6 +107,13 @@ CREATE TABLE IF NOT EXISTS categories (
     is_active INTEGER DEFAULT 1, -- 1 = aktiv, 0 = deaktiviert
     created_at DATETIME DEFAULT (datetime('now')), -- Erstellungsdatum
     updated_at DATETIME DEFAULT (datetime('now')), -- Letzte Änderung
+    created_by INTEGER NULL, -- Ersteller der Zeile
+    updated_by INTEGER NULL, -- Letzte Änderung
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (updated_by) REFERENCES users(id),
+    -- Selbstreferenz für Unterkategorien
+    -- FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE CASCADE,
+    -- CHECK (parent_id IS NULL OR parent_id != id) -- Verhindert Zirkularität
     FOREIGN KEY (parent_id) REFERENCES categories(id) -- Selbstreferenz für Unterkategorien
 );
 
@@ -107,6 +124,7 @@ CREATE TABLE IF NOT EXISTS products (
     price INTEGER NOT NULL, -- Preis pro Einheit
     stock INTEGER NULL, -- Verfügbarer Lagerbestand
     unit TEXT NOT NULL, -- Einheit (z. B. Stück, kg, l)
+    display_order INTEGER NULL, -- Reihenfolge für die Anzeige
     category_id INTEGER NOT NULL, -- Verweis auf die Hauptkategorie
     is_active INTEGER DEFAULT 1, -- 1 = aktiv, 0 = deaktiviert
     created_at DATETIME DEFAULT (datetime('now')), -- Erstellungszeitpunkt
@@ -130,6 +148,12 @@ CREATE TABLE IF NOT EXISTS transaction_items (
     */
     price INTEGER NOT NULL, -- Preis pro Einheit
     subtotal INTEGER GENERATED ALWAYS AS (quantity * price) STORED, -- Automatisch berechnetes Gesamtpreisfeld
+    created_at DATETIME DEFAULT (datetime('now')), -- Erstellungszeitpunkt
+    updated_at DATETIME DEFAULT (datetime('now')), -- Letzte Aktualisierung
+    created_by INTEGER NULL, -- Ersteller der Zeile
+    updated_by INTEGER NULL, -- Letzte Änderung
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    FOREIGN KEY (updated_by) REFERENCES users(id),
     FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
@@ -143,7 +167,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     payment_method TEXT NOT NULL CHECK(payment_method IN ('cash', 'card', 'TWINT')), -- Zahlungsmethode
     status TEXT NOT NULL CHECK(status IN ('open', 'paid', 'canceled')), -- Status der Transaktion
     table_number INTEGER NULL, -- Falls das System Tischnummern unterstützt
-    total_discount INTEGER NULL, -- Gesamtrabatt auf die Transaktion
+    -- total_discount INTEGER NULL, -- Gesamtrabatt auf die Transaktion
     tip INTEGER NULL, -- Gegebenes Trinkgeld
     note TEXT NULL, -- Zusätzliche Anmerkungen
     print_count INTEGER DEFAULT 0, -- Anzahl der gedruckten Belege
@@ -191,7 +215,8 @@ INSERT INTO categories (name,description,parent_id) VALUES
     ('Heissgetränke','Kaffee, Tee, heisse Schokolade.','2'),
     ('Bier & Cider','Verschiedene Biersorten und Cider.','2'),
     ('Wein & Sekt','Rotwein, Weisswein, Rosé, Sekt.','2'),
-    ('Spirituosen & Cocktails','Hochprozentige Getränke wie Whisky, Vodka, Rum, Gin sowie gemischte Cocktails.','2');
+    ('Spirituosen & Cocktails','Hochprozentige Getränke wie Whisky, Vodka, Rum, Gin sowie gemischte Cocktails.','2'),
+    ('Diverse Produkte','Verschiedene Artikel, die nicht direkt zu Essen oder Getränken gehören, z. B. Bücher, CDs oder sonstige Produkte.','3');
 
 -- Produkte / Artikel: price ist als INT geführt, d.h. ohne Nachkommastellen, damit keine Rundungsfehler entstehen, die Werte müssen durch 100 gerechnet werden um als Dezimalstelle anzuzeigen
 INSERT INTO products (name,description,price,unit,category_id) VALUES 
@@ -302,37 +327,37 @@ INSERT INTO members (first_name,last_name,birthdate,email,phone,membership_numbe
 
     -- TEST DATEN
 
--- Test Mitglieder
-INSERT INTO members (first_name,last_name,birthdate,email,phone,membership_number,member_state_id,discount,is_active,is_service_required) VALUES 
-    ('Max','Muster','1990-01-01','','079 123 45 67','1001',1,0,1,1),
-    ('Marta','Muster','1995-02-02','','079 234 56 78','1002',1,0,1,1),
-    ('Mia','Muster','2000-03-03','','079 345 67 89','1003',1,0,1,1),
-    ('Moritz','Muster','2005-04-04','','079 456 78 90','1004',1,0,1,1),
-    ('Marius','Muster','2010-05-05','','079 567 89 01','1005',1,0,1,1);
+-- -- Test Mitglieder
+-- INSERT INTO members (first_name,last_name,birthdate,email,phone,membership_number,member_state_id,discount,is_active,is_service_required) VALUES 
+--     ('Max','Muster','1990-01-01','','079 123 45 67','1001',1,0,1,1),
+--     ('Marta','Muster','1995-02-02','','079 234 56 78','1002',1,0,1,1),
+--     ('Mia','Muster','2000-03-03','','079 345 67 89','1003',1,0,1,1),
+--     ('Moritz','Muster','2005-04-04','','079 456 78 90','1004',1,0,1,1),
+--     ('Marius','Muster','2010-05-05','','079 567 89 01','1005',1,0,1,1);
 
--- Test Benutzer role = 1 (Admin) 2 = Kassierer; is_active = 1 (aktiv)
-INSERT INTO users (member_id,username,password_hash,role_id,is_active) VALUES 
-    (1,'admin','$2y$10$1,1,1),
-    (2,'kassierer','$2y$10$1,2,1);
+-- -- Test Benutzer role = 1 (Admin) 2 = Kassierer; is_active = 1 (aktiv)
+-- INSERT INTO users (member_id,username,password_hash,role_id,is_active) VALUES 
+--     (1,'admin','$2y$10$1,1,1),
+--     (2,'kassierer','$2y$10$1,2,1);
 
--- Test Serviceeinheiten
-INSERT INTO service_units (start_time,end_time,status_id) VALUES 
-    ('2022-01-01 10:00:00','2022-01-04 12:00:00',1),
-    ('2022-01-04 12:00:00','2022-01-08 14:00:00',1),
-    ('2022-01-08 14:00:00','2022-01-12 16:00:00',1);
+-- -- Test Serviceeinheiten
+-- INSERT INTO service_units (start_time,end_time,status_id) VALUES 
+--     ('2022-01-01 10:00:00','2022-01-04 12:00:00',1),
+--     ('2022-01-04 12:00:00','2022-01-08 14:00:00',1),
+--     ('2022-01-08 14:00:00','2022-01-12 16:00:00',1);
 
--- Test transaktionen
-INSERT INTO transactions (cashier_id,total_amount,payment_method,status) VALUES 
-    (1,500,'cash','open'),
-    (2,1000,'cash','paid'),
-    (1,1500,'TWINT','cancelled');
+-- -- Test transaktionen
+-- INSERT INTO transactions (cashier_id,total_amount,payment_method,status) VALUES 
+--     (1,500,'cash','open'),
+--     (2,1000,'cash','paid'),
+--     (1,1500,'TWINT','cancelled');
 
--- Test transaktionspositionen
-INSERT INTO transaction_items (transaction_id,product_id,quantity,price) VALUES 
-    (1,1,2,250),
-    (1,2,1,250),
-    (2,3,1,250),
-    (2,4,1,500),
-    (2,5,1,250),
-    (3,6,1,500);
+-- -- Test transaktionspositionen
+-- INSERT INTO transaction_items (transaction_id,product_id,quantity,price) VALUES 
+--     (1,1,2,250),
+--     (1,2,1,250),
+--     (2,3,1,250),
+--     (2,4,1,500),
+--     (2,5,1,250),
+--     (3,6,1,500);
 

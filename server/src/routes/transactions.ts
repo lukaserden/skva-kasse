@@ -83,12 +83,13 @@ router.get("/open", async (req: Request, res: Response): Promise<any> => {
 });
 
 /** GET by ID: Einzelne Transaktion abrufen */
-router.get("/:id", async (req: Request, res: Response): Promise<any> => {
+router.get("/:id", async (req: Request, res: Response) : Promise<any> => {
   try {
     const { id } = req.params;
     const db = await dbPromise;
+
     const transaction = await db.get(
-      "SELECT * FROM transactions WHERE id = ?",
+      `SELECT * FROM transactions WHERE id = ?`,
       [id]
     );
 
@@ -97,16 +98,26 @@ router.get("/:id", async (req: Request, res: Response): Promise<any> => {
     }
 
     const items = await db.all(
-      "SELECT * FROM transaction_items WHERE transaction_id = ?",
+      `SELECT ti.*, p.name as product_name, p.category_id 
+       FROM transaction_items ti
+       JOIN products p ON p.id = ti.product_id
+       WHERE ti.transaction_id = ?`,
       [id]
     );
 
-    res.json({ ...transaction, items });
+    res.json({
+      data: {
+        ...transaction,
+        items,
+      },
+    });
   } catch (error) {
-    console.error("Fehler beim Abrufen der Transaktion:", error);
-    res.status(500).json({ error: "Fehler beim Abrufen der Transaktion" });
+    console.error("Fehler beim Laden der Transaktion:", error);
+    res.status(500).json({ error: "Fehler beim Laden der Transaktion" });
   }
 });
+
+
 
 /** POST: Neue Transaktion erstellen */
 router.post("/", async (req: Request, res: Response): Promise<any> => {
@@ -168,63 +179,29 @@ router.post("/", async (req: Request, res: Response): Promise<any> => {
 });
 
 /** PUT: Transaktion aktualisieren */
-router.put("/:id", async (req: Request, res: Response): Promise<any> => {
+router.put("/:id/status", async (req: Request, res: Response) : Promise<any> => {
   try {
-    const {
-      member_id,
-      cashier_id,
-      total_amount,
-      payment_method,
-      status,
-      table_number,
-      total_discount,
-      tip,
-      note,
-      print_count,
-    } = req.body;
-
     const { id } = req.params;
-    const db = await dbPromise;
+    const { status } = req.body;
 
+    if (!["open", "completed", "cancelled"].includes(status)) {
+      return res.status(400).json({ error: "Ungültiger Status" });
+    }
+
+    const db = await dbPromise;
     const result = await db.run(
-      `UPDATE transactions SET 
-        member_id = ?, 
-        cashier_id = ?, 
-        total_amount = ?, 
-        payment_method = ?, 
-        status = ?, 
-        table_number = ?, 
-        total_discount = ?, 
-        tip = ?, 
-        note = ?, 
-        print_count = ?, 
-        last_printed_at = datetime('now')
-      WHERE id = ?`,
-      [
-        member_id,
-        cashier_id,
-        total_amount,
-        payment_method,
-        status,
-        table_number,
-        total_discount,
-        tip,
-        note,
-        print_count,
-        id,
-      ]
+      `UPDATE transactions SET status = ?, updated_at = datetime('now') WHERE id = ?`,
+      [status, id]
     );
 
     if (result.changes === 0) {
       return res.status(404).json({ error: "Transaktion nicht gefunden" });
     }
 
-    res.json({ success: true, message: "Transaktion aktualisiert" });
+    res.json({ success: true, message: "Status aktualisiert" });
   } catch (error) {
-    console.error("Fehler beim Aktualisieren der Transaktion:", error);
-    res
-      .status(500)
-      .json({ error: "Fehler beim Aktualisieren der Transaktion" });
+    console.error("Fehler beim Aktualisieren des Status:", error);
+    res.status(500).json({ error: "Fehler beim Aktualisieren des Status" });
   }
 });
 

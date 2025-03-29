@@ -114,7 +114,7 @@ const ArticleTabs: React.FC<ArticleTabsProps> = ({ addToOrder }) => {
 
       {/* Tabs Content */}
       {Object.values(mainCategories).map((tab) => (
-        <TabsContent key={tab} value={tab} className="flex-1 overflow-hidden">
+        <TabsContent key={tab} value={tab} className="max-h-[80vh] flex flex-col flex-1 overflow-hidden">
           <ScrollArea className="h-full"> 
             <div className="grid grid-cols-4 gap-2 p-2">
               {groupedArticles[tab]?.length ? (
